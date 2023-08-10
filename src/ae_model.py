@@ -7,7 +7,21 @@ from torchinfo import summary
 
 
 class linear_encoder(nn.Module): 
+
+    """ 
+    Implementation of a 1-layer linear encoder for autoencoder.
+    """
     def __init__(self, d_input: int, d_latent:int): 
+        """ 
+        Initialize the linear_encoder class.
+
+        Parameters
+        ----------
+        d_input : int
+            Dimension of the input.
+        d_latent : int
+            Dimension of the latent space.
+        """
         super().__init__()
         self.d_input = input 
         self.d_latent = d_latent 
@@ -15,6 +29,15 @@ class linear_encoder(nn.Module):
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        
+        """ 
+        Forward pass of the linear_encoder class. 
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
         x = self.fc1(x)
         x = F.relu(x)
         return x
@@ -22,7 +45,22 @@ class linear_encoder(nn.Module):
 
 
 class linear_decoder(nn.Module):
+    """
+    Implementing the 1-layer linear decoder for autoencoder.
+    """
     def __init__(self, d_latent:int ,d_output:int): 
+
+        """ 
+        Initialize the linear_decoder class.
+
+        Parameters
+        ----------
+        d_latent : int
+            Dimension of the latent space.
+        d_output : int
+            Dimension of the output.
+        """
+
         super().__init__()
         self.d_latent = d_latent
         self.d_output = d_output
@@ -30,13 +68,42 @@ class linear_decoder(nn.Module):
         self.fc1 = nn.Linear(d_latent, d_output)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        """ 
+        Forward pass of the linear_decoder class.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
+        
         x = self.fc1(x)
         return x
 
 
 
-class linear_autoencoder(nn.Module): 
+class linear_autoencoder(nn.Module):
+
+    """
+    Implementing the 1-layer linear autoencoder.
+    """
+
     def __init__(self, d_input: int, d_latent:int): 
+        """ 
+        Initialize the linear_autoencoder class.
+        
+        Parameters
+        ---------- 
+        d_input : int
+            Dimension of the input.
+        d_latent : int
+            Dimension of the latent space.
+        self.encoder__ : nn.Module 
+            Encoder module.
+        self.decoder__ : nn.Module
+            Decoder module.
+        """
+        
         super().__init__()
         self.d_input = input 
         self.d_latent = d_latent 
@@ -45,15 +112,42 @@ class linear_autoencoder(nn.Module):
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        """ 
+        Forward pass of the linear_autoencoder class.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
+
         x = self.encoder__(x)
         x = self.decoder__(x)
         return x
 
-
-
-
 ###################################################################################################################################################################################
-def single_conv1d_block(in_channels: int, out_channel: int, kernel_size: int, stride: int, padding: str, *args, **kwargs) -> nn.Sequential: 
+def single_conv1d_block(in_channels: int, out_channel: int, kernel_size: int, stride: int, padding: str, *args, **kwargs) -> nn.Sequential:
+    """ 
+    Implementing a single convolutional layer with batch normalization and ELU activation.
+
+    Parameters
+    ----------
+    in_channels : int
+        Number of input channels. In the input layer this is equal to the number of the sensors used. 
+    out_channel : int   
+        Number of output channels.   
+    kernel_size : int
+        Kernel size of the convolutional layer. 
+    stride : int
+        Stride of the convolutional layer. Choose it with care, because it affects the dimension of the output.
+    padding : str
+        Padding of the convolutional layer. Choose it with care, because it affects the dimension of the output.
+    *args :
+        Variable length argument list.
+    **kwargs :
+        Arbitrary keyword arguments.
+    """
+
     return nn.Sequential( 
             nn.Conv1d(in_channels, out_channel, kernel_size, stride, padding, *args, **kwargs), 
             nn.BatchNorm1d(out_channel), 
@@ -62,6 +156,26 @@ def single_conv1d_block(in_channels: int, out_channel: int, kernel_size: int, st
 
 
 def single_trans_conv1d_block(in_channels: int, out_channel: int, kernel_size: int, stride: int, padding: int, output_padding: int, *args, **kwargs) -> nn.Sequential:
+    """ 
+    Implementing a single Trans convolutional layer with batch normalization and ELU activation.
+
+    Parameters
+    ----------
+    in_channels : int
+        Number of input channels.  
+    out_channel : int   
+        Number of output channels.   
+    kernel_size : int
+        Kernel size of the convolutional layer. 
+    stride : int
+        Stride of the convolutional layer. Choose it with care, because it affects the dimension of the output.
+    padding : str
+        Padding of the convolutional layer. Choose it with care, because it affects the dimension of the output.
+    *args :
+        Variable length argument list.
+    **kwargs :
+        Arbitrary keyword arguments.
+    """
     return nn.Sequential(
             nn.ConvTranspose1d(in_channels, out_channel, kernel_size, stride, padding, output_padding, *args, **kwargs),
             nn.BatchNorm1d(out_channel),
@@ -69,7 +183,13 @@ def single_trans_conv1d_block(in_channels: int, out_channel: int, kernel_size: i
         )
 
 class ConvBlock(nn.Module): 
+    """ 
+    Implementing a convolutional block with residual connections and downsampling. 
+
+    The ConVBlock is inspired by the architecture in
+    "High Fidelity Neural Audio Compression" by Alexandre Defossez et al. (2022)
     
+    """
     def __init__(self, c_in: int, c_out: int, kernel_size_residual: int, kernel_size_down_sampling: int,stride_in: int, strid_down_sampling: int): 
         
         """
