@@ -5,38 +5,38 @@ This project is intended to compress the pressure sensors data of a wind Turbine
 ![Logo](plots/encoder_decoder.png)
 
 
-## Documentation
+## Requirements
 
-TO DO 
-[Documentation](https://linktodocumentation)
-
+The python environment that we used to developed all the codes and test the model is listed in the following file. It is highly recommended to install all the requirements before starting the project. 
+You can install all the requirements by running the following command in terminal. 
+```bash
+pip install -r requirements.txt
+```
 
 ## Deployment
 
-To deploy this project run the following in the ``` src ``` folder
+The models are described in the ```ae_models.py``` scripts.
+
+To train the models run the following in the ``` src ``` folder
 
 ```bash
-  python main.py 
+  python main_train.py 
 ```
+The trained models are stored in the `trained_models` folder. A 16 digit random number is assigned to each model where the hyper-parameters of the model are stored in the ```training_results.csv``` folder. 
 
-## Project 
+To test the models run the following in ```src``` folder
 
-```bash
-├── data
-├── LICENSE
-├── README.md
-└── src
-    ├── dataset.py
-    ├── feature_classnew.py
-    └── main.py
-
-
+```bash 
+    python main_test.py
 ```
+Notice to adjust hyper-paramters of the model before running the script to be coherent with the trained model that you would like to choose.  
 
 ## Contact 
 
-for data access contact me via [Mail](amirhossein.moallem2@unibo.it)
-## Directory Tree
+To access data, please contact me via [Mail](amirhossein.moallem2@unibo.it)
+
+
+## Project
 ```bash
 ├── LICENSE
 ├── plots
@@ -47,8 +47,8 @@ for data access contact me via [Mail](amirhossein.moallem2@unibo.it)
 │   ├── data_save.py
 │   ├── dataset_ae.py
 │   ├── input_shape_trial.py
-│   ├── pytorch_to_onnx.py
-│   ├── test_reconstructed.py
-│   └── train_reconstructed.py
+│   ├── main_test.py
+│   ├── main_train.py
+│   └── pytorch_to_onnx.py
 └── trained_models
 ```
