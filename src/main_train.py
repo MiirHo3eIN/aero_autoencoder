@@ -65,7 +65,7 @@ class reconstruction_loss(nn.Module):
         return (l1_loss + self.alpha*mse_loss) / (self.alpha)
 
 
-def main_train(seq_len, batch_size, epochs, alpha ):
+def main_train(seq_len, batch_size, epochs, alpha):
     
     print("Enter main")
 
