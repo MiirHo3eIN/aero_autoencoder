@@ -475,12 +475,16 @@ class CNN_AE(nn.Module):
 
     This model is the general mode that is callled from the main_trin.py and main_test scripts to train and load the trained models. 
     """ 
-    def __init__(self, c_in, *args, **kwargs) -> None:
+    def __init__(self, c_in, tiny=False, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.c_in = c_in
-
-        self.encoder = CNN_encoder(c_in = self.c_in)
-        self.decoder = CNN_decoder(c_in = self.c_in)
+        if tiny:
+                self.encoder = Tiny_CNN_encoder(c_in = self.c_in)
+                self.decoder = Tiny_CNN_decoder(c_in = self.c_in)
+	
+        else:
+                self.encoder = CNN_encoder(c_in = self.c_in)
+                self.decoder = CNN_decoder(c_in = self.c_in)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
         x = self.encoder(x)
