@@ -31,7 +31,7 @@ class linear_encoder(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
         
         """ 
-        Forward pass of the linear_encoder class. 
+        Propagate the input through the linear_encoder class. 
 
         Parameters
         ----------
@@ -69,7 +69,7 @@ class linear_decoder(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
         """ 
-        Forward pass of the linear_decoder class.
+        Propagate the input through the linear_decoder class.
 
         Parameters
         ----------
@@ -113,7 +113,7 @@ class linear_autoencoder(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
         """ 
-        Forward pass of the linear_autoencoder class.
+        Propagate the input through the linear_autoencoder class.
 
         Parameters
         ----------
@@ -135,7 +135,7 @@ def single_conv1d_block(in_channels: int, out_channel: int, kernel_size: int, st
     in_channels : int
         Number of input channels. In the input layer this is equal to the number of the sensors used. 
     out_channel : int   
-        Number of output channels.   
+        Number of output channels. Modyfing this parameter effect the spatial relation between the sensors.   
     kernel_size : int
         Kernel size of the convolutional layer. 
     stride : int
@@ -187,7 +187,7 @@ class ConvBlock(nn.Module):
     Implementing a convolutional block with residual connections and downsampling. 
 
     The ConVBlock is inspired by the architecture in
-    "High Fidelity Neural Audio Compression" by Alexandre Defossez et al. (2022)
+    "High Fidelity Neural Audio Compression" by Alexandre Defossez et al. (2023)
     
     """
     def __init__(self, c_in: int, c_out: int, kernel_size_residual: int, kernel_size_down_sampling: int,stride_in: int, strid_down_sampling: int): 
@@ -250,7 +250,45 @@ class ConvBlock(nn.Module):
 
 
 class trans_conv_block(nn.Module):
+    """ 
+    Implementing a Transose convolutional block with residual connections and Upsampling for the Decoder part. 
+
+    The ConVBlock is inspired by the architecture in
+    "High Fidelity Neural Audio Compression" by Alexandre Defossez et al. (2023)
+    
+    """
+    
     def __init__(self, c_in: int, c_out: int, kernel_size: int, kernel_size_up_sampling: int, stride_residual: int, stride_up_sampling: int, padding: int, output_padding: int, *args, **kwargs): 
+        
+        """ 
+        Initialize the Transpose ConvBlock class.
+
+        Parammeter 
+        ----------
+
+        c_in : int
+            Number of input channels.
+        c_out : int
+            Number of output channels.
+        kernel_size : int
+            Kernel size of the residual block in the backbone of the block.
+        kernel_size_up_sampling : int
+            Kernel size of the upsampling block
+        stride_residual : int  
+            Stride of the residual block in the backbone of the block.
+        stride_up_sampling : int
+            Stride of the upsampling block.
+        padding : str
+            padding of the convolutional layers.
+        output_padding : int
+            Output padding of the convolutional layers.
+        *args :
+            Variable length argument list.
+        **kwargs :
+            Arbitrary keyword arguments.
+        """
+        
+        
         super().__init__()
         self.c_in = c_in
         self.c_out = c_out
@@ -270,6 +308,14 @@ class trans_conv_block(nn.Module):
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Propagate the input through the Transpose ConvBlock.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
 
         res = x 
         x = self.backbone(x)
@@ -280,9 +326,28 @@ class trans_conv_block(nn.Module):
 
 
 
-class CNN_encoder(nn.Module): 
+class CNN_encoder(nn.Module):
+
+    """
+    CNN Encoder class for the Encoder part of the model with a feature extraction layer, one residual block, and downsampling layer.
+    
+    This is a simplified model compared to the one presented in the paper.
+    """
+
     def __init__(self, c_in): 
         super().__init__()
+
+        """
+        Initialize the CNN Encoder class. 
+
+        Parammeter
+        ----------
+        c_in : int
+            Number of input channels.
+        
+        self.encoder : nn.Sequential
+            Sequential model of the Encoder.
+        """
         self.c_in = c_in 
 
         self.encoder = nn.Sequential(
@@ -292,11 +357,35 @@ class CNN_encoder(nn.Module):
             )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        """
+        Propagate the input through the Encoder.
+        
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
         x = self.encoder(x)
         return x
 
 class Tiny_CNN_encoder(nn.Module):
+    """ 
+    Tiny CNN Encoder class for the Encoder part of the model with a residual block and downsampling layer.
+    
+    This is the most simplified model compared to the one presented in the paper.
+    """
     def __init__(self, c_in): 
+        """      
+        Initialize the Tiny CNN Encoder class.
+    
+        Parammeter
+        ----------
+        c_in : int
+            Number of input channels.
+        self.encoder : nn.Sequential 
+            Sequential model of the Encoder.
+        """
+
         super().__init__()
         self.c_in = c_in 
 
@@ -311,7 +400,22 @@ class Tiny_CNN_encoder(nn.Module):
 
 
 class CNN_decoder(nn.Module): 
+    """
+    CNN Decoder class for the Decoder part of the model with an Upsampling, one residual block, and a reconstruction layer.
+    
+    This is a simplified model compared to the one presented in the paper.
+    """
     def __init__(self, c_in, *args, **kwargs) -> None:
+        """
+        Initialize the CNN Decoder class.
+        
+        Parammeter
+        ----------
+        c_in : int
+            Number of input channels.
+        self.decoder : nn.Sequential    
+            Sequential model of the Decoder.
+        """
         super().__init__(*args, **kwargs)
         self.c_in = c_in
 
@@ -321,12 +425,29 @@ class CNN_decoder(nn.Module):
             single_trans_conv1d_block(in_channels=c_in, out_channel= self.c_in, kernel_size=3, stride=2, padding=1, output_padding=1)
         )
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        """
+        Propagate the input through the Decoder.
+        """ 
         x = self.decoder(x)
         return x
     
 
 class Tiny_CNN_decoder(nn.Module):
+    """ 
+    Tiny CNN Decoder class for the Decoder part of the model with a residual block and Upsampling layer.
+    
+    This is the most simplified model compared to the one presented in the paper.
+    """
     def __init__(self, c_in, *args, **kwargs) -> None:
+        """
+
+        Initialize the Tiny CNN Decoder class.
+        
+        C_in : int
+            Number of input channels.   
+        self.decoder : nn.Sequential
+            Sequential model of the Decoder.
+        """
         super().__init__(*args, **kwargs)
         self.c_in = c_in
 
@@ -336,10 +457,24 @@ class Tiny_CNN_decoder(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        """ 
+        Propagate the input through the Decoder.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor.
+        """
         x = self.decoder(x)
         return x
 
-class CNN_AE(nn.Module): 
+class CNN_AE(nn.Module):
+
+    """
+    CNN Autoencoder class for the Autoencoder model with an Encoder and a Decoder.
+
+    This model is the general mode that is callled from the main_trin.py and main_test scripts to train and load the trained models. 
+    """ 
     def __init__(self, c_in, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.c_in = c_in
