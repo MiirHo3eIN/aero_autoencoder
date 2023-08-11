@@ -22,7 +22,7 @@ To train the models run the following in the ``` src ``` folder
 ```bash
   python main_train.py 
 ```
-The trained models are stored in the `trained_models` folder. A 16 digit random number is assigned to each model where the hyper-parameters of the model are stored in the ```training_results.csv``` folder. 
+The trained models are stored in the `trained_models` folder. A 16 digit random number is assigned to each model where the hyper-parameters of the model are stored in the ```training_results.csv``` file. 
 
 To test the models run the following in ```src``` folder
 
