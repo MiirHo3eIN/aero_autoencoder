@@ -85,7 +85,6 @@ def main(model_id):
     # Load the Testdata
     df = pd.read_csv(open(path_results))
     seq_len = df[df["model_id"] == model_id]['window_size'].values[0]
-    latent = df[df["model_id"] == model_id]['latent_dim'].values[0]
     
     # Load the Model
     model = Models.get(model_id)
@@ -108,7 +107,6 @@ def main(model_id):
         torch.save(test_x_hat, path_dataset + filename_reconstructed)
 
 
-    meta = dict()
     
 
 
