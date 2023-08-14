@@ -2,8 +2,26 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 
-from torchinfo import summary
 
+class Models():
+
+    cnn = [ "CA5B:E21B:71ED:3A1C",
+            "F06D:D524:BFD6:232E",
+            "D86A:2185:C32B:7239",
+            "A3B3:8C1F:43AC:7718",
+            "B4AD:31CC:3620:B782"] 
+    tiny_cnn = [    "7547:B8DA:C870:507A",
+                    "829C:AF16:5D58:E61C",
+                    "C019:A640:74EF:D675",
+                    "102E:5B5E:C956:FD77"]
+    @classmethod
+    def get(cls, model_id):
+        if model_id in cls.cnn:
+            return CNN_AE(c_in = 36, tiny=False)
+        if model_id in cls.tiny_cnn:
+            return CNN_AE(c_in = 36, tiny=True)
+        else:
+            return None
 
 
 class linear_encoder(nn.Module): 
