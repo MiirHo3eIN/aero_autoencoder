@@ -1,67 +1,15 @@
-import numpy as np 
 import torch 
-import torch.nn as nn
-from torchinfo import summary
 import os
-import math
 import pandas as pd
 
-
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import seaborn as sns
 from datetime import datetime
-from torch.utils.data import DataLoader, TensorDataset
-
-import tqdm
-from tqdm.notebook import tqdm_notebook
-
-import random
 
 import shutup 
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
 shutup.please()
 
 # Custom imports
 from dataset_ae import TimeSeriesDataset
 from ae_model import Models
-import numpy as np 
-import torch 
-import torch.nn as nn
-from torchinfo import summary
-import os
-import math
-import pandas as pd
-
-
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-from torch.utils.data import DataLoader, TensorDataset
-
-import tqdm
-from tqdm.notebook import tqdm_notebook
-
-import random
-
-import shutup 
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
-shutup.please()
-
-# Custom imports
-from dataset_ae import TimeSeriesDataset
-from ae_model import Models
-
-
-
-
 
 def main(model_id):
     # Hardcoded Data
@@ -92,14 +40,18 @@ def main(model_id):
 
     for experiment in experiments:
         
+        print(f"Experiment: {experiment}")
         # Load the data 
         test_x = TimeSeriesDataset(path_Cp_data, [experiment], seq_len = seq_len)    
+
+        print(f"Test X shape: {test_x.shape}")
 
         # Run the data through the model
         with torch.no_grad():
             model.eval() 
             test_x_hat = model(test_x.float())
     
+        print(f"Test X Hat shape: {test_x_hat.shape}\n")
         # pickle reconstructed signal along with original signal
         filename_original = f"exp_{experiment}_original.pt"
         filename_reconstructed = f"exp_{experiment}_reconstructed.pt"
