@@ -21,18 +21,21 @@ class Damage_Classes():
                        [range(96, 114), 4.0, "20mm Crack"]]
 
     # experiment to label
+    @staticmethod
     def ex2label(experiment):
         for d_class in Damage_Classes.classes:
             if experiment in d_class[0]:
                 return d_class[1]
 
     # label to experiments
+    @staticmethod
     def label2exlist(label):
         for d_class in Damage_Classes.classes:
             if label == d_class[1]:
                 return [*d_class[0]]
                 
     # chech label for validity
+    @staticmethod
     def validate_label(label):
         for d_class in Damage_Classes.classes:
             if label == d_class[1]:
@@ -42,7 +45,7 @@ class Damage_Classes():
 # This class operates on the original cp data
 # Creates a dataset that returns sequenced data attached with a label
 class CpDataset(Dataset):
-    def __init__(self, experiments: np.array, seq_len: int) -> None:
+    def __init__(self, experiments: list, seq_len: int) -> None:
        
 
         def line_count(file_path):
@@ -194,6 +197,9 @@ class TensorLoaderCp():
         # m = used rows in dataset
         return tensor
  
+
+# Personal note: unify the following two classes
+
 # looks like a class, because it creates a (specific) Tensor
 def TimeseriesTensor(path, experiments: np.array, seq_len:int) -> torch.Tensor:
 
