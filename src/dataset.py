@@ -147,6 +147,22 @@ class Overlapper(nn.Module):
 
         return final_tensor
 
+class TensorLoaderPickeld():
+    def __init__(self, path, experiments: list) -> None:
+        self._path = path 
+        self._exp = experiments
+        self._datasetlen = len(self._exp)
+
+    def __len__(self) -> int:
+        return self._datasetlen
+    
+
+    def __getitem__(self, idx: int) -> torch.Tensor:
+        exp = self._exp[idx]
+        filepath = self._path+f'/exp_{exp:03}.pt'
+        t = torch.load(filepath) 
+        return t 
+
 class TensorLoaderCp():
 
     def __init__(self, path, experiments: list) -> None:
@@ -199,25 +215,19 @@ def TimeseriesTensor(path, experiments: np.array, seq_len:int) -> torch.Tensor:
 # This function looks like a class, because it resembles a factory.
 # It creates a Dataset from a previosly pickeld dataset.
 # Since it operates only on tensors, all of them are concurently in mem.
-def PickeldCpDataset(folder_path, experiments: np.array, seq_len:int) -> torch.Tensor:
+def TimeseriesPickeldTensor(folder_path, experiments: list) -> torch.Tensor:
 
-    dataset = RawDataset(folder_path, experiments, seq_len= seq_len)  
+    tensors = TensorLoaderPickeld(folder_path, experiments)  
     
-    sample_acum = 0
-    for tensor_num in np.arange(0, len(dataset)):
-        
-        tensor = dataset[tensor_num]
+    t = None        
+    for tensor in tensors:
 
-        if tensor_num == 0:
-            tensors_cat = tensor
+        if t is None:
+            t = tensor 
         else:
-            tensors_cat = torch.cat((tensors_cat, tensor), dim = 0)
+            t = torch.cat((t , tensor), dim = 0)
         
-        sample_acum += tensor.shape[0]
-
-#    assert tensors_cat.shape[0] ==  sample_acum , "Concatenation of tensors is not working" 
-    
-    return tensors_cat  
+    return t  
 
 
 if __name__ == "__main__":
@@ -225,7 +235,10 @@ if __name__ == "__main__":
     # ts, label = timeseries[455]
     # print(ts.shape)
 
-    t = TimeseriesTensor("../data/AoA_0deg_Cp/", [3], 200)
-    print(t.shape)
+    # path = "../data/pickeld/CA5B:E21B:71ED:3A1C-2023_08_15_14_41_11/reconstructed"
+    # TimeseriesPickeldTensor(path, [3])
+
+    # t = TimeseriesTensor("../data/AoA_0deg_Cp/", [3], 200)
+    # print(t.shape)
 
     pass

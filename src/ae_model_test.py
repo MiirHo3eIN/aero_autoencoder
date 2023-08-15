@@ -15,7 +15,12 @@ from ae_model import CNN_encoder, CNN_decoder, ConvBlock, trans_conv_block
 
 def test_ConvBlock(input_x: torch.Tensor): 
     print(input_x.shape)
-    conv_block = ConvBlock(c_in = 38, c_out = 64, kernel_size_residual = 3, kernel_size_down_sampling = 7, stride_in = 1, strid_down_sampling = 2)
+    conv_block = ConvBlock(c_in = 38,
+                           c_out = 64,
+                           kernel_size_residual = 3,
+                           kernel_size_down_sampling = 7, 
+                           stride_in = 1, 
+                           strid_down_sampling = 2)
     summary(conv_block, input_size = input_x.shape)
     output = conv_block(input_x)
 
@@ -23,7 +28,13 @@ def test_ConvBlock(input_x: torch.Tensor):
 
 
 def test_trans_conv_block(input_x: torch.Tensor):
-    conv_block = trans_conv_block(c_in=152, c_out=76, kernel_size=3, kernel_size_up_sampling=3, stride_residual=1, stride_up_sampling=2, padding=1, output_padding=0)
+    conv_block = trans_conv_block(c_in=152, 
+                                  c_out=76, kernel_size=3, 
+                                  kernel_size_up_sampling=3, 
+                                  stride_residual=1, 
+                                  stride_up_sampling=2, 
+                                  padding=1, 
+                                  output_padding=0)
     summary(conv_block, input_size = input_x.shape)
 
 def test_cnn_encoder(input_x:torch.Tensor): 
@@ -44,7 +55,7 @@ if __name__ == "__main__":
     
     # Uncomment the type of test you want to run.
     # ------------------------------------------------
-    #    test_ConvBlock()
-    #    test_cnn_encoder(input_x)
-    #    test_trans_conv_block(encoded_x)
-    #    test_cnn_decoder(encoded_x)
+    # test_ConvBlock(input_x)
+    # test_cnn_encoder(input_x)
+    # test_trans_conv_block(encoded_x)
+    # test_cnn_decoder(encoded_x)
