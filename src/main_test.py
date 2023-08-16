@@ -1,33 +1,18 @@
-import numpy as np 
 import torch 
 import torch.nn as nn
-from torchinfo import summary
 import os
 import math
 import pandas as pd
-
-
-import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from torch.utils.data import DataLoader, TensorDataset
-
-import tqdm
-from tqdm.notebook import tqdm_notebook
-
-import random
-
 import shutup 
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
 shutup.please()
 
 # Custom imports
-from dataset_ae import TimeSeriesDataset
+from dataset import * 
 from ae_model import Models
+from data_save import updateMSE
 
 
 def criterion(x, x_hat):
@@ -47,8 +32,9 @@ def model_eval(model_id):
     df = pd.read_csv(open(path_results))
     seq_len = df[df["model_id"] == model_id]['window_size'].values[0]
     latent = df[df["model_id"] == model_id]['latent_dim'].values[0]
-    test_x = TimeSeriesDataset(path_Cp_data, test_exp, seq_len = seq_len)    
-    
+    test_x = TimeseriesTensor(path_Cp_data, test_exp, seq_len = seq_len)    
+    print(test_x.shape)
+
     # Load the Model
     model = Models.get(model_id)
     model.load_state_dict(torch.load(path_models))    
@@ -60,6 +46,11 @@ def model_eval(model_id):
     
     # Calculate the metric
     output = criterion(test_x.float(), test_x_hat.float())
+    print(f"{model_id} | MSE: {output}")
+    print(type(output))
+    
+    print(output.item())
+    updateMSE(model_id, output.item())
 
     # Print the Results into a Plot
     sensor = 17
@@ -76,6 +67,8 @@ def model_eval(model_id):
         plt.savefig(f"../plots/tests/test_{model_id}.png")
         plt.show()
 
+     
+
 
 
 
@@ -83,10 +76,10 @@ if __name__ == "__main__":
     cnn = [ "CA5B:E21B:71ED:3A1C", "F06D:D524:BFD6:232E", "D86A:2185:C32B:7239", "A3B3:8C1F:43AC:7718", "B4AD:31CC:3620:B782"] 
     tiny_cnn = ["7547:B8DA:C870:507A", "829C:AF16:5D58:E61C", "C019:A640:74EF:D675", "102E:5B5E:C956:FD77"]
 
-    # model_eval(tiny_cnn[3])
-    model_eval(cnn[4])
+    model_eval(tiny_cnn[3])
+    # model_eval(cnn[4])
     # for model in cnn:
     #     model_eval(model)
  
     # for model in tiny_cnn:
-    #     model_eval(model)
+        # model_eval(model)

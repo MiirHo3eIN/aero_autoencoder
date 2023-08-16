@@ -1,8 +1,7 @@
 import numpy as np 
 import pandas as pd
 # To save the trained model
-import joblib
-from csv import writer, DictWriter
+from csv import DictWriter
 import random
 import os
 
@@ -44,3 +43,18 @@ def create_csv(data: dict) -> None:
     df = pd.DataFrame.from_dict(data, orient = "index").T.to_csv("../training_results.csv", header = True, index = False)
     print("Created the csv file is as follows:")
     print(df)
+
+
+def updateMSE(model_id, mse):
+    df = pd.read_csv("../training_results.csv")
+    # check if the mse columns already exists
+    if not 'mse' in df.columns:
+        df['mse'] = pd.Series()
+    
+    df.loc[df["model_id"]==model_id, "mse"] = mse
+    df.to_csv("../training_results.csv", index=False)
+
+
+
+if __name__ == "__main__":
+    updateMSE("CA5B:E21B:71ED:3A1C", 0.00003)
