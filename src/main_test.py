@@ -31,7 +31,7 @@ def model_eval(model_id):
     seq_len = df[df["model_id"] == model_id]['window_size'].values[0]
     latent = df[df["model_id"] == model_id]['latent_dim'].values[0]
     test_x = TimeseriesTensor(path_Cp_data, test_exp, seq_len = seq_len)    
-    print(test_x.shape)
+    print(f"Test data loaded with shape: {test_x.shape}")
 
     # Load the Model
     model = Models.get(model_id)
@@ -44,10 +44,7 @@ def model_eval(model_id):
     
     # Calculate the metric
     output = criterion(test_x.float(), test_x_hat.float())
-    print(f"{model_id} | MSE: {output}")
-    print(type(output))
-    
-    print(output.item())
+    print(f"Tested Model:{model_id} with MSE: {output:.5}")
     updateMSE(model_id, output.item())
 
     # Print the Results into a Plot
@@ -73,8 +70,8 @@ def model_eval(model_id):
 if __name__ == "__main__":
     cnn = [ "CA5B:E21B:71ED:3A1C", "F06D:D524:BFD6:232E", "D86A:2185:C32B:7239", "A3B3:8C1F:43AC:7718", "B4AD:31CC:3620:B782"] 
     tiny_cnn = ["7547:B8DA:C870:507A", "829C:AF16:5D58:E61C", "C019:A640:74EF:D675", "102E:5B5E:C956:FD77"]
-
-    model_eval(tiny_cnn[3])
+    # model_eval(tiny_cnn[3])
+    model_eval("8363:802A:3AC2:C596")
     # model_eval(cnn[4])
     # for model in cnn:
     #     model_eval(model)

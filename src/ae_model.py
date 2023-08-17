@@ -9,7 +9,8 @@ class Models():
             "F06D:D524:BFD6:232E",
             "D86A:2185:C32B:7239",
             "A3B3:8C1F:43AC:7718",
-            "B4AD:31CC:3620:B782"] 
+            "B4AD:31CC:3620:B782",
+            "8363:802A:3AC2:C596"]
     tiny_cnn = [    "7547:B8DA:C870:507A",
                     "829C:AF16:5D58:E61C",
                     "C019:A640:74EF:D675",
@@ -408,7 +409,7 @@ class Tiny_CNN_encoder(nn.Module):
         self.c_in = c_in 
 
         self.encoder = nn.Sequential(
-            single_conv1d_block(in_channels = self.c_in , out_channel = self.c_in, kernel_size = 7, stride = 2, padding= 3),  
+            single_conv1d_block(in_channels = self.c_in , out_channel = self.c_in, kernel_size = 7, stride = 2, padding = 3),  
             ConvBlock(c_in = c_in, c_out = c_in, kernel_size_residual = 3, kernel_size_down_sampling = 7, stride_in = 1, strid_down_sampling = 2)
             )
 

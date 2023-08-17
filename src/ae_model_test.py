@@ -4,7 +4,7 @@ from torchinfo import summary
 from ae_model import CNN_AE
 from ae_model import CNN_encoder, CNN_decoder, ConvBlock, trans_conv_block 
 
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 """ 
     This scripts tests the CNN encoder and decoder blocks. 
     The input is random noise. However, the impotant thing is to have the correct shape and sizes. 
@@ -14,8 +14,8 @@ from ae_model import CNN_encoder, CNN_decoder, ConvBlock, trans_conv_block
 
 
 def test_ConvBlock(input_x: torch.Tensor): 
-    print(input_x.shape)
-    conv_block = ConvBlock(c_in = 38,
+    print(f"Input to conv Block: {input_x.shape}")
+    conv_block = ConvBlock(c_in = 36,
                            c_out = 64,
                            kernel_size_residual = 3,
                            kernel_size_down_sampling = 7, 
@@ -24,7 +24,7 @@ def test_ConvBlock(input_x: torch.Tensor):
     summary(conv_block, input_size = input_x.shape)
     output = conv_block(input_x)
 
-    print(output.shape)
+    print(f"Outputto conv Block: {output.shape}")
 
 
 def test_trans_conv_block(input_x: torch.Tensor):
@@ -50,12 +50,14 @@ def test_cnn_decoder(input_x):
 
 
 if __name__ == "__main__": 
-    input_x = torch.randn(10, 38, 100)
-    encoded_x = torch.randn(10, 152, 13)
+    input_x = torch.randn(10, 36, 200).to(device)
+    # encoded_x = torch.randn(10, 152, 13)
     
     # Uncomment the type of test you want to run.
     # ------------------------------------------------
-    # test_ConvBlock(input_x)
+
+    print(input_x.shape)
+    test_ConvBlock(input_x)
     # test_cnn_encoder(input_x)
     # test_trans_conv_block(encoded_x)
     # test_cnn_decoder(encoded_x)

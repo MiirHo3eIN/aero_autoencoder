@@ -28,7 +28,7 @@ path_Cp_data = '../data/cp_data_true/AoA_0deg_Cp/'
 train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88, 89,93,98,99,102,107,108,111, 112]
 valid_exp = [16,27,54,61,92,103]
 
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 data_single_node = {
     "model_id": None,
@@ -60,6 +60,7 @@ def initData(seq_len, stride, batch_size):
     print(f"Initilaize Datasets")
     train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len= seq_len)
     valid_x = TimeseriesTensor(path_Cp_data,valid_exp, seq_len= seq_len)
+    train_x, valid_x = train_x.to(device), valid_x.to(device)
 
     print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[2]} sequence length")
     print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[2]} sequence length")
@@ -83,7 +84,7 @@ def train(model, train_x, valid_x, epochs, alpha):
     eps = 1e-9
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=betas, eps=eps)
     criterion = reconstruction_loss(alpha=alpha)
-
+    print(f"Used Device: {device}")
     print(f"Optimizer | lr: {lr} | betas: {betas} | eps: {eps}")
     print(f"Criterion alpha: {alpha}")
     print("\n")
@@ -99,13 +100,13 @@ def train(model, train_x, valid_x, epochs, alpha):
     time_start = time.time()
     for epoch in np.arange(0, epochs):
         
-        print(f"Epoch: {epoch+1}/{epochs}")
+        print(f"Epoch: {epoch+1}/{epochs}", end="")
 
         ### TRAINING PHASE ###
 
         for x_batch, y_batch in (train_x):
-            print("x_batch shape: ", x_batch.shape)
-            print("y_batch shape: ", y_batch.float().shape)
+            # print("x_batch shape: ", x_batch.shape)
+            # print("y_batch shape: ", y_batch.float().shape)
             
            
             y_train = model.forward(x_batch.float())
@@ -136,8 +137,8 @@ def train(model, train_x, valid_x, epochs, alpha):
                 valid_epoch_loss += [valid_loss.item()]
 
 
-        print(f"epoch{epoch+1}, \t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss)}, \
-        Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss)}")
+        print(f"\t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss):.05}, \
+                Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss):.05}")
 
         train_total_loss.append(sum(train_epoch_loss)/len(train_epoch_loss))
         valid_total_loss.append(sum(valid_epoch_loss)/len(valid_epoch_loss))
@@ -153,7 +154,7 @@ def train(model, train_x, valid_x, epochs, alpha):
 
 def save_model(model_number, seq_len, train_loss, valid_loss, train_time):
     print("-"*50)
-    print("Saving the model information")
+    print(f"Saving the model: {model_number}")
 
     data_single_node["model_id"] = model_number
     data_single_node["architecture"] = "CNN-Based"
@@ -171,22 +172,25 @@ if __name__ == "__main__":
     
     seq_len_list = [200, 400, 600, 800 ]
     batch_size = [32, 64, 128, 256, 512, 1024]
-    epochs = [100, 120, 160 ,200]
+    epochs = [10, 100, 120, 160 ,200]
     alpha = [0.3, 0.5, 0.9]
 
     seq_len = seq_len_list[0]
 
     model = CNN_AE(c_in=36 )
+    model.to(device)
 
     summary(model, input_size=(1, 36, seq_len))
 
     train_x, valid_x = initData(seq_len=seq_len, stride=10, batch_size=batch_size[0])
 
 
-    train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[-2], alpha[-1])
+    train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[0], alpha[-1])
 
     answer = input("Do you want to save the Model? (y/n): ")
-    print(answer)  
-    exit() 
-    model_number = data_save.generate_hexadecimal()
-    save_model(model_number, seq_len, train_total_loss[-1], valid_total_loss[-1], train_time)
+    if answer == "y":
+        model_number = data_save.generate_hexadecimal()
+    
+        # Save the model 
+        torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
+        save_model(model_number, seq_len, train_total_loss[-1], valid_total_loss[-1], train_time)
