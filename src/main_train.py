@@ -2,37 +2,26 @@ import numpy as np
 import torch 
 import torch.nn as nn
 from torchinfo import summary
+from torch.utils.data import TensorDataset, DataLoader 
 
 
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
 
-from torch.utils.data import DataLoader, TensorDataset
-
 import time 
 
-import tqdm
-from tqdm.notebook import tqdm_notebook
-
-import random
-
 import shutup 
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
 shutup.please()
 
 # Custom imports
-from dataset_ae import TimeSeriesDataset
+from dataset import * 
 from ae_model import linear_autoencoder, CNN_AE
 import data_save 
 
 # User input
 
-path_Cp_data = '/home/miir_ho3ein/project/aerosense_CAD/cp_data/AoA_0deg_Cp'
-path_saved_features =  '/home/miir_ho3ein/project/aerosense_CAD/rocket_features/features_0deg/'
+path_Cp_data = '../data/cp_data_true/AoA_0deg_Cp/'
 
 # define training and test set based on design of experiment excel document
 
@@ -65,34 +54,15 @@ class reconstruction_loss(nn.Module):
         return (l1_loss + self.alpha*mse_loss) / (self.alpha)
 
 
-def main_train(seq_len, batch_size, epochs, alpha ):
-    
-    print("Enter main")
+def initData(seq_len, stride, batch_size):
 
-    # Hyper parameters
-
-    # Lin = Input Vector length 
-    # Lout = Output Vector length
-    # batch_size  
-    # epochs 
-
-
-    train_x = TimeSeriesDataset(path_Cp_data,train_exp, seq_len= seq_len)
-    valid_x = TimeSeriesDataset(path_Cp_data,valid_exp, seq_len= seq_len)
-    print(train_x.shape)
-
-    
     print("-"*50)
-    
-    print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[1]} sequence length")
-    print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[1]} sequence length")
+    print(f"Initilaize Datasets")
+    train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len= seq_len)
+    valid_x = TimeseriesTensor(path_Cp_data,valid_exp, seq_len= seq_len)
 
-    model = CNN_AE(c_in=36 )
-
-    summary(model, input_size=(1, 36, seq_len))
-
-    optimizer = torch.optim.Adam(model.parameters(), lr= 0.0001, betas=(0.9, 0.98), eps=1e-9)
-    criterion = reconstruction_loss(alpha= alpha)
+    print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[2]} sequence length")
+    print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[2]} sequence length")
 
     dataset_train = TensorDataset(train_x , train_x)
     train_loader = DataLoader(dataset_train, batch_size = batch_size, shuffle = False)
@@ -100,12 +70,32 @@ def main_train(seq_len, batch_size, epochs, alpha ):
     dataset_valid = TensorDataset(valid_x, valid_x)
     valid_loader = DataLoader(dataset_valid, batch_size = batch_size, shuffle = False)
     del train_x, valid_x
+    
+    print("\n")
+    return train_loader, valid_loader
+
+def train(model, train_x, valid_x, epochs, alpha):
+
+    print("-"*50)
+    print("Setup Training...")
+    lr = 0.0001
+    betas = (0.9, 0.98)
+    eps = 1e-9
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=betas, eps=eps)
+    criterion = reconstruction_loss(alpha=alpha)
+
+    print(f"Optimizer | lr: {lr} | betas: {betas} | eps: {eps}")
+    print(f"Criterion alpha: {alpha}")
+    print("\n")
+
 
     train_epoch_loss, valid_epoch_loss = [], []
     train_batch_loss, valid_batch_loss = [], []
     train_total_loss, valid_total_loss = [], []
     model_number = data_save.generate_hexadecimal()
     
+    print("-"*50)
+    print("Starting Training...")
     time_start = time.time()
     for epoch in np.arange(0, epochs):
         
@@ -113,9 +103,9 @@ def main_train(seq_len, batch_size, epochs, alpha ):
 
         ### TRAINING PHASE ###
 
-        for x_batch, y_batch in (train_loader):
-            #print("x_batch shape: ", x_batch.shape)
-            #print("y_batch shape: ", y_batch.float().shape)
+        for x_batch, y_batch in (train_x):
+            print("x_batch shape: ", x_batch.shape)
+            print("y_batch shape: ", y_batch.float().shape)
             
            
             y_train = model.forward(x_batch.float())
@@ -134,8 +124,7 @@ def main_train(seq_len, batch_size, epochs, alpha ):
 
               
         ### VALIDATION PHASE ###
-        
-        for x_batch, y_batch in (valid_loader):
+        for x_batch, y_batch in (valid_x):
 
             with torch.no_grad():
                 model.eval()
@@ -146,8 +135,6 @@ def main_train(seq_len, batch_size, epochs, alpha ):
                 valid_batch_loss += [valid_loss]
                 valid_epoch_loss += [valid_loss.item()]
 
-        # Save the model 
-        torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
 
         print(f"epoch{epoch+1}, \t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss)}, \
         Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss)}")
@@ -160,27 +147,25 @@ def main_train(seq_len, batch_size, epochs, alpha ):
     time_end = time.time()
     train_time = time_end - time_start
 
+    # Save the model 
+    torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
+    return train_time, train_total_loss, valid_total_loss 
+
+def save_model(model_number, seq_len, train_loss, valid_loss, train_time):
+    print("-"*50)
     print("Saving the model information")
+
     data_single_node["model_id"] = model_number
     data_single_node["architecture"] = "CNN-Based"
     data_single_node["activation"] = "l1+0.9mse"
     data_single_node["window_size"] = seq_len
     data_single_node["latent_dim"] = seq_len//8
-    data_single_node["train_loss"] = train_total_loss[-1]
-    data_single_node["valid_loss"] = valid_total_loss[-1]
+    data_single_node["train_loss"] = train_loss
+    data_single_node["valid_loss"] = valid_loss 
     data_single_node["train_time"] = train_time
-
 
     data_save.write_to_csv(data_single_node)
 
-
-    # Plot the loss
-    #plt.figure(figsize=(12, 8))
-    #plt.plot(train_total_loss, label='Train loss')
-    #plt.plot(valid_total_loss, label='Valid loss')
-    #plt.legend()
-    #plt.show()
-   
 
 if __name__ == "__main__":
     
@@ -189,7 +174,19 @@ if __name__ == "__main__":
     epochs = [100, 120, 160 ,200]
     alpha = [0.3, 0.5, 0.9]
 
-    for seq_len in seq_len_list:
-        print(f"Training for Sequence length: {seq_len}")
-        main_train(seq_len, batch_size[2], epochs[-2], alpha[-1])
-        print("Done")
+    seq_len = seq_len_list[0]
+
+    model = CNN_AE(c_in=36 )
+
+    summary(model, input_size=(1, 36, seq_len))
+
+    train_x, valid_x = initData(seq_len=seq_len, stride=10, batch_size=batch_size[0])
+
+
+    train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[-2], alpha[-1])
+
+    answer = input("Do you want to save the Model? (y/n): ")
+    print(answer)  
+    exit() 
+    model_number = data_save.generate_hexadecimal()
+    save_model(model_number, seq_len, train_total_loss[-1], valid_total_loss[-1], train_time)
