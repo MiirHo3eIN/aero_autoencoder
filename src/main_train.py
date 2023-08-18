@@ -16,7 +16,7 @@ shutup.please()
 
 # Custom imports
 from dataset import * 
-from ae_model import linear_autoencoder, CNN_AE
+from ae_model import *
 import data_save 
 
 # User input
@@ -148,8 +148,6 @@ def train(model, train_x, valid_x, epochs, alpha):
     time_end = time.time()
     train_time = time_end - time_start
 
-    # Save the model 
-    torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
     return train_time, train_total_loss, valid_total_loss 
 
 def save_model(model_number, seq_len, train_loss, valid_loss, train_time):
@@ -160,7 +158,7 @@ def save_model(model_number, seq_len, train_loss, valid_loss, train_time):
     data_single_node["architecture"] = "CNN-Based"
     data_single_node["activation"] = "l1+0.9mse"
     data_single_node["window_size"] = seq_len
-    data_single_node["latent_dim"] = seq_len//8
+    data_single_node["latent_dim"] = "not known"
     data_single_node["train_loss"] = train_loss
     data_single_node["valid_loss"] = valid_loss 
     data_single_node["train_time"] = train_time
@@ -177,7 +175,9 @@ if __name__ == "__main__":
 
     seq_len = seq_len_list[0]
 
-    model = CNN_AE(c_in=36 )
+    # model = CNN_AE(c_in=36 )
+    # model = AE_4f90(c_in=36 )
+    model = AE_942A(c_in=36)
     model.to(device)
 
     summary(model, input_size=(1, 36, seq_len))
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     train_x, valid_x = initData(seq_len=seq_len, stride=10, batch_size=batch_size[0])
 
 
-    train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[0], alpha[-1])
+    train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alpha[-1])
 
     answer = input("Do you want to save the Model? (y/n): ")
     if answer == "y":

@@ -49,7 +49,7 @@ def model_eval(model_id):
 
     # Print the Results into a Plot
     sensor = 17
-    title = f'Model: {model_id} | Sensor: {sensor} \n Sequence Length: {seq_len} | Latent Size: {latent} \n MSE: {output}'
+    title = f'Model: {model_id} | Sensor: {sensor} \n Sequence Length: {seq_len} | Latent Size: 18 x 200 \n MSE: {output}'
     with sns.plotting_context("poster"):
         sns.set(rc={'figure.figsize':(15,8.27)})
         plt.figure()
@@ -71,7 +71,10 @@ if __name__ == "__main__":
     cnn = [ "CA5B:E21B:71ED:3A1C", "F06D:D524:BFD6:232E", "D86A:2185:C32B:7239", "A3B3:8C1F:43AC:7718", "B4AD:31CC:3620:B782"] 
     tiny_cnn = ["7547:B8DA:C870:507A", "829C:AF16:5D58:E61C", "C019:A640:74EF:D675", "102E:5B5E:C956:FD77"]
     # model_eval(tiny_cnn[3])
-    model_eval("8363:802A:3AC2:C596")
+    # model_eval("8363:802A:3AC2:C596")
+    model_eval("D9F2:0A27:942A:1DA0")
+    # model_eval("4E09:4C41:54E0:9BF9")
+    # model_eval("372D:4517:E7D3:34E9")
     # model_eval(cnn[4])
     # for model in cnn:
     #     model_eval(model)

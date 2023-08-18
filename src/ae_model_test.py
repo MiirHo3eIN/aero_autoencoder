@@ -1,8 +1,7 @@
 import torch 
 from torchinfo import summary
 
-from ae_model import CNN_AE
-from ae_model import CNN_encoder, CNN_decoder, ConvBlock, trans_conv_block 
+from ae_model import * 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 """ 
@@ -47,8 +46,30 @@ def test_cnn_decoder(input_x):
     cnn_decoder = CNN_decoder(c_in = 152)
     summary(cnn_decoder, input_size = input_x.shape)
 
+def test_AE_3c83(input_x):
+    
+    print(f"Input: {input_x.shape}")
+    dut = AE_3c83(c_in = 36)
+    summary(dut, input_size = input_x.shape)
+    output = dut(input_x)
 
+    print(f"Outputto: {output.shape}")
 
+def test_AE_4f90(input_x):
+    print(f"Input: {input_x.shape}")
+    dut = AE_4f90(c_in = 36)
+    summary(dut, input_size = input_x.shape)
+    output = dut(input_x)
+
+    print(f"Outputto: {output.shape}")
+
+def test_AE_942A(input_x):
+    print(f"Input: {input_x.shape}")
+    dut = AE_942A(c_in = 36)
+    summary(dut, input_size = input_x.shape)
+    output = dut(input_x)
+
+    print(f"Outputto: {output.shape}")
 if __name__ == "__main__": 
     input_x = torch.randn(10, 36, 200).to(device)
     # encoded_x = torch.randn(10, 152, 13)
@@ -56,8 +77,10 @@ if __name__ == "__main__":
     # Uncomment the type of test you want to run.
     # ------------------------------------------------
 
-    print(input_x.shape)
-    test_ConvBlock(input_x)
+    # test_AE_3c83(input_x)
+    # test_AE_4f90(input_x)
+    test_AE_942A(input_x)
+    # test_ConvBlock(input_x)
     # test_cnn_encoder(input_x)
     # test_trans_conv_block(encoded_x)
     # test_cnn_decoder(encoded_x)
