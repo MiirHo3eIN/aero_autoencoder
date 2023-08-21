@@ -4,11 +4,6 @@ import torch.nn as nn
 from torchinfo import summary
 from torch.utils.data import TensorDataset, DataLoader 
 
-
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-
-
 import time 
 
 import shutup 
@@ -17,7 +12,7 @@ shutup.please()
 # Custom imports
 from dataset import * 
 from ae_model import *
-import data_save 
+import utils 
 
 # User input
 
@@ -32,13 +27,15 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 data_single_node = {
     "model_id": None,
-    "architecture": None,
+    "arch_id": None,
     "activation": None,
     "window_size": None,
-    "latent_dim": None,
+    "latent_channels": None,
+    "latent_seq_len": None,
     "train_loss": None,
     "valid_loss": None,
-    "train_time": None
+    "train_time": None,
+    "mse": None
 }
 
 class reconstruction_loss(nn.Module):
@@ -93,7 +90,6 @@ def train(model, train_x, valid_x, epochs, alpha):
     train_epoch_loss, valid_epoch_loss = [], []
     train_batch_loss, valid_batch_loss = [], []
     train_total_loss, valid_total_loss = [], []
-    model_number = data_save.generate_hexadecimal()
     
     print("-"*50)
     print("Starting Training...")
@@ -150,20 +146,35 @@ def train(model, train_x, valid_x, epochs, alpha):
 
     return train_time, train_total_loss, valid_total_loss 
 
-def save_model(model_number, seq_len, train_loss, valid_loss, train_time):
+def save_model(model, archID, seq_len, train_loss, valid_loss, train_time):
+
+    answer = input("Do you want to save the Model? (y/n): ")
+    if answer == "n": exit()
+
+    answer = input("Please enter the latent channels? [0-100]: ")
+    l_channels = utils.checkNumber(answer)
+    
+    answer = input("Please enter the latent sequence length? [0-10000]: ")
+    l_seq_len = utils.checkNumber(answer)
+
+    model_number = utils.generate_hexadecimal()
+
     print("-"*50)
     print(f"Saving the model: {model_number}")
 
+    torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
+
     data_single_node["model_id"] = model_number
-    data_single_node["architecture"] = "CNN-Based"
+    data_single_node["arch_id"] = archID
     data_single_node["activation"] = "l1+0.9mse"
     data_single_node["window_size"] = seq_len
-    data_single_node["latent_dim"] = "not known"
+    data_single_node["latent_seq_len"] = l_seq_len
+    data_single_node["latent_channels"] = l_channels
     data_single_node["train_loss"] = train_loss
     data_single_node["valid_loss"] = valid_loss 
     data_single_node["train_time"] = train_time
 
-    data_save.write_to_csv(data_single_node)
+    utils.write_to_csv(data_single_node)
 
 
 if __name__ == "__main__":
@@ -175,9 +186,9 @@ if __name__ == "__main__":
 
     seq_len = seq_len_list[0]
 
-    # model = CNN_AE(c_in=36 )
-    # model = AE_4f90(c_in=36 )
-    model = AE_942A(c_in=36)
+    archID = "3ec9"
+
+    model = Model(archID)
     model.to(device)
 
     summary(model, input_size=(1, 36, seq_len))
@@ -187,10 +198,4 @@ if __name__ == "__main__":
 
     train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alpha[-1])
 
-    answer = input("Do you want to save the Model? (y/n): ")
-    if answer == "y":
-        model_number = data_save.generate_hexadecimal()
-    
-        # Save the model 
-        torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
-        save_model(model_number, seq_len, train_total_loss[-1], valid_total_loss[-1], train_time)
+    save_model(model, archID, seq_len, train_total_loss[-1], valid_total_loss[-1], train_time)

@@ -1,44 +1,8 @@
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F
-
-
-class Models():
-
-
-    arch = {
-
-            }
-
-    cnn = [ "CA5B:E21B:71ED:3A1C",
-            "F06D:D524:BFD6:232E",
-            "D86A:2185:C32B:7239",
-            "A3B3:8C1F:43AC:7718",
-            "B4AD:31CC:3620:B782",
-            "8363:802A:3AC2:C596"]
-    tiny_cnn = [    "7547:B8DA:C870:507A",
-                    "829C:AF16:5D58:E61C",
-                    "C019:A640:74EF:D675",
-                    "102E:5B5E:C956:FD77"]
-    AE3c38 = ["D9F2:0A27:942A:1DA0"]
-    AE4f90 = ["4E09:4C41:54E0:9BF9"]
-    AE942A = ["372D:4517:E7D3:34E9"]
-
-    @classmethod
-    def get(cls, model_id):
-        if model_id in cls.cnn:
-            return CNN_AE(c_in = 36, tiny=False)
-        if model_id in cls.tiny_cnn:
-            return CNN_AE(c_in = 36, tiny=True)
-        if model_id in cls.AE3c38:
-            return AE_3c83(c_in = 36)
-        if model_id in cls.AE4f90:
-            return AE_4f90(c_in = 36)
-        if model_id in cls.AE942A:
-            return AE_942A(c_in = 36)
-        else:
-            return None
-
+from torchinfo import summary
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class linear_encoder(nn.Module): 
 
@@ -116,7 +80,8 @@ class linear_decoder(nn.Module):
 
 
 
-class linear_autoencoder(nn.Module):
+#class linear_autoencoder(nn.Module):
+class AE_6424(nn.Module):
 
     """
     Implementing the 1-layer linear autoencoder.
@@ -256,8 +221,8 @@ class ConvBlock(nn.Module):
         self.stride_down_sampling = strid_down_sampling
 
         self.backbone = nn.Sequential(
-            single_conv1d_block(in_channels = self.c_in , out_channel = self.c_in, kernel_size = self.kernel_size, stride = self.stride, padding= "1"),
-            single_conv1d_block(in_channels = self.c_in , out_channel = self.c_in, kernel_size = self.kernel_size, stride = self.stride, padding= "1"),
+            single_conv1d_block(in_channels = self.c_in , out_channel = self.c_in, kernel_size = self.kernel_size, stride = self.stride, padding= 1),
+            single_conv1d_block(in_channels = self.c_in , out_channel = self.c_in, kernel_size = self.kernel_size, stride = self.stride, padding= 1),
         )
         
         self.downsampling = nn.Conv1d(in_channels = self.c_in, out_channels = c_out, kernel_size = self.kernel_down_sampling, stride = self.stride_down_sampling, padding = 3)
@@ -502,23 +467,34 @@ class Tiny_CNN_decoder(nn.Module):
         x = self.decoder(x)
         return x
 
-class CNN_AE(nn.Module):
+class AE_8c49(nn.Module):
+
+    """
+    Tiny CNN Autoencoder class for the Autoencoder model with an Encoder and a Decoder.
+
+    """ 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.c_in = 36
+        self.encoder = Tiny_CNN_encoder(c_in = self.c_in)
+        self.decoder = Tiny_CNN_decoder(c_in = self.c_in)
+	
+    def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
+class AE_a61c(nn.Module):
 
     """
     CNN Autoencoder class for the Autoencoder model with an Encoder and a Decoder.
 
-    This model is the general mode that is callled from the main_trin.py and main_test scripts to train and load the trained models. 
     """ 
-    def __init__(self, c_in, tiny=False, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.c_in = c_in
-        if tiny:
-                self.encoder = Tiny_CNN_encoder(c_in = self.c_in)
-                self.decoder = Tiny_CNN_decoder(c_in = self.c_in)
-	
-        else:
-                self.encoder = CNN_encoder(c_in = self.c_in)
-                self.decoder = CNN_decoder(c_in = self.c_in)
+        self.c_in = 36
+        self.encoder = CNN_encoder(c_in = self.c_in)
+        self.decoder = CNN_decoder(c_in = self.c_in)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor: 
         x = self.encoder(x)
@@ -532,11 +508,11 @@ class AE_3c83(nn.Module):
     Simple autoencoder that reduces the channels to 18
 
     """
-    def __init__(self, c_in, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.c_in = c_in
+        self.c_in = 36
         
-        self.c_out = c_in // 2
+        self.c_out = 36 // 2
 
         self.encoder = nn.Sequential(
             nn.Conv1d(self.c_in, self.c_out, kernel_size=5, stride=1, padding=2),
@@ -561,7 +537,7 @@ class AE_4f90(nn.Module):
     Simple autoencoder that reduces the channels to 9 (cf = 4)
 
     """
-    def __init__(self, c_in, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.c_in = 36
         
@@ -592,12 +568,12 @@ class AE_4f90(nn.Module):
         return x
 
 
-class AE_942A(nn.Module):
+class AE_942a(nn.Module):
     """
     Simple autoencoder that reduces the channels to 5 (cf = 7.2)
 
     """
-    def __init__(self, c_in, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.c_in = 36
         
@@ -634,3 +610,189 @@ class AE_942A(nn.Module):
         # print(f"Latent Dimensions: {x.shape}")
         x = self.decoder(x)
         return x
+
+class AE_b686(nn.Module):
+    """
+    Simple autoencoder that reduces the seq len to 100 (cf = 2) 
+ 
+    """
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.c_in = 36
+        
+        self.encoder = nn.Sequential(
+            nn.Conv1d(in_channels=36, out_channels=36, kernel_size=7, stride=2, padding=3),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+        )
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose1d(in_channels=36, out_channels=36, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+
+        )
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        x = self.encoder(x)
+        # print(f"Latent Dimensions: {x.shape}")
+        x = self.decoder(x)
+        return x
+
+class AE_3ec9(nn.Module):
+    """
+    Simple autoencoder that reduces the seq len by a factor of 4 (cf = 4) 
+ 
+    """
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.c_in = 36
+        
+        self.encoder = nn.Sequential(
+            nn.Conv1d(in_channels=36, out_channels=36, kernel_size=7, stride=2, padding=3),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+
+            nn.Conv1d(in_channels=36, out_channels=36, kernel_size=7, stride=2, padding=3),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+        )
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose1d(in_channels=36, out_channels=36, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+
+            nn.ConvTranspose1d(in_channels=36, out_channels=36, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        x = self.encoder(x)
+        # print(f"Latent Dimensions: {x.shape}")
+        x = self.decoder(x)
+        return x
+
+class AE_d6eb(nn.Module):
+    """
+    Simple autoencoder that reduces the channels to 5 (cf = 7.2)
+
+    """
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.c_in = 36
+        
+        self.encoder = nn.Sequential(
+            nn.Conv1d(in_channels=36, out_channels=18, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(18),
+            nn.ELU(),
+
+            nn.Conv1d(in_channels=18, out_channels=9, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(9),
+            nn.ELU(),
+
+            nn.Conv1d(in_channels=9, out_channels=9, kernel_size=7, stride=2, padding=3),
+            nn.BatchNorm1d(9),
+            nn.ELU(),
+        )
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose1d(in_channels=9, out_channels=9, kernel_size=7, stride=2, padding=3, output_padding=1),
+            nn.BatchNorm1d(9),
+            nn.ELU(),
+
+            nn.ConvTranspose1d(in_channels=9, out_channels=18, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(18),
+            nn.ELU(),
+
+            nn.ConvTranspose1d(in_channels=18, out_channels=36, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+        )
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        x = self.encoder(x)
+        # print(f"Latent Dimensions: {x.shape}")
+        x = self.decoder(x)
+        return x
+
+class AE_e7c0(nn.Module):
+    """
+    Simple autoencoder that reduces the channels to 5 (cf = 7.2)
+
+    """
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.c_in = 36
+        
+        self.encoder = nn.Sequential(
+            nn.Conv1d(in_channels=36, out_channels=18, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(18),
+            nn.ELU(),
+
+            nn.Conv1d(in_channels=18, out_channels=9, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(9),
+            nn.ELU(),
+
+            nn.Conv1d(in_channels=9, out_channels=9, kernel_size=7, stride=2, padding=3),
+            nn.BatchNorm1d(9),
+            nn.ELU(),
+        )
+
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose1d(in_channels=9, out_channels=9, kernel_size=7, stride=2, padding=3, output_padding=1),
+            nn.BatchNorm1d(9),
+            nn.ELU(),
+
+            nn.ConvTranspose1d(in_channels=9, out_channels=18, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(18),
+            nn.ELU(),
+
+            nn.ConvTranspose1d(in_channels=18, out_channels=36, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm1d(36),
+            nn.ELU(),
+        )
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor: 
+        x = self.encoder(x)
+        # print(f"Latent Dimensions: {x.shape}")
+        x = self.decoder(x)
+        return x
+
+arch = {'a61c': AE_a61c, # CNN with residual stuff
+        '8c49': AE_8c49, # Tiny CNN with residual stuff
+        '6424': AE_6424, # simple linear
+        '3c38': AE_3c83, # simple CNN depth = 1 - reduces chan
+        '4f90': AE_4f90, # simple CNN depth = 2 - reduces chan
+        '942a': AE_942a, # simple CNN depth = 3 - reduces chan
+        'b686': AE_b686, # simple CNN depth = 1 - reduces seq
+        'd6eb': AE_d6eb, # simple CNN depth = 3 - reduces seq and chan
+        '3ec9': AE_3ec9, # simple CNN depth = 2 - reduces seq
+        'e7c0': AE_e7c0, # simple CNN depth = 2 - reduces seq
+        }
+
+    # tiny_cnn = [    "7547:B8DA:C870:507A",
+    #                 "829C:AF16:5D58:E61C",
+    #                 "C019:A640:74EF:D675",
+    #                 "102E:5B5E:C956:FD77"]
+    # AE3c38 = ["D9F2:0A27:942A:1DA0"]
+    # AE4f90 = ["4E09:4C41:54E0:9BF9"]
+    # AE942A = ["372D:4517:E7D3:34E9"]
+def Model(arch_id):
+    print(f"Model({arch_id})")
+    return arch[arch_id]()
+
+
+if __name__ == "__main__":
+
+    input_x = torch.randn(10, 36, 200).to(device)
+
+    print(f"Input: {input_x.shape}")
+    dut = Model('3ec9')
+    summary(dut, input_size = input_x.shape)
+    output = dut(input_x)
+
+    print(f"Outputto: {output.shape}")
+

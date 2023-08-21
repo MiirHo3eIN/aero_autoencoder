@@ -65,7 +65,7 @@ def test_AE_4f90(input_x):
 
 def test_AE_942A(input_x):
     print(f"Input: {input_x.shape}")
-    dut = AE_942A(c_in = 36)
+    dut = AE_942a(c_in = 36)
     summary(dut, input_size = input_x.shape)
     output = dut(input_x)
 

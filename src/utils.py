@@ -4,6 +4,7 @@ import pandas as pd
 from csv import DictWriter
 import random
 import os
+from simple_term_menu import TerminalMenu
 
 
 MSE = lambda x, x_hat: np.mean(np.square(x - x_hat), axis = 1)
@@ -54,7 +55,42 @@ def updateMSE(model_id, mse):
     df.loc[df["model_id"]==model_id, "mse"] = mse
     df.to_csv("../training_results.csv", index=False)
 
+def modelChooser():
+    df = pd.read_csv("../training_results.csv")
+    options = []
+    model_ids = []
+    for row in df.iterrows():
+        x = row[1]
+        model_ids.append(x['model_id'])
+        options.append(f"{x['model_id']} - {x['window_size']} -> {x['latent_channels']} x {x['latent_seq_len']}")
+    terminal_menu = TerminalMenu(options)
+    menu_entry_index = terminal_menu.show()
 
+    model_id = model_ids[menu_entry_index]
+    return df.loc[df['model_id'] == model_id].to_dict(orient='index')[menu_entry_index]
 
+def checkNumber(string: str) -> int:
+    integer = int(string)
+    if integer in range(0, 10000):
+        return integer
+    raise Exception()
 if __name__ == "__main__":
-    updateMSE("CA5B:E21B:71ED:3A1C", 0.00003)
+    
+    # updateMSE("CA5B:E21B:71ED:3A1C", 0.00003)
+    # print(modelChooser())
+    
+    answer = input("Do you want to save the Model? (y/n): ")
+    if answer == "n": exit()
+
+    answer = input("Please enter the latent channels? [0-100]: ")
+    l_channels = checkNumber(answer)
+    
+    answer = input("Please enter the latent sequence length? [0-10000]: ")
+    l_seq_len = checkNumber(answer)
+
+    model_number = generate_hexadecimal()
+
+    print("-"*50)
+    print(f"Saving the model: {model_number}")
+
+    
