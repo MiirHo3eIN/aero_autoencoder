@@ -3,7 +3,8 @@ import os
 import pandas as pd 
 import torch 
 import torch.nn as nn
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Sampler
+import random
 
 import shutup 
 shutup.please()
@@ -150,6 +151,25 @@ class Overlapper(nn.Module):
 
         return final_tensor
 
+class RandomSampler(nn.Module):
+    
+    def __init__(self, samples: int, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.samples = samples 
+
+    def forward(self, input_x: torch.Tensor) -> torch.Tensor:
+        nrows, ncolumns, x = input_x.shape
+        
+        # if there is less data than needed return everything
+        if nrows < self.samples:
+            return input_x
+
+        # sample
+        idx = random.sample(range(0, nrows), self.samples) 
+        idx.sort()
+        idx = torch.tensor(idx)
+        return torch.index_select(input_x, 0, idx) 
+
 class TensorLoaderPickeld():
     def __init__(self, path, experiments: list) -> None:
         self._path = path 
@@ -201,10 +221,10 @@ class TensorLoaderCp():
 # Personal note: unify the following two classes
 
 # looks like a class, because it creates a (specific) Tensor
-def TimeseriesTensor(path, experiments: np.array, seq_len:int) -> torch.Tensor:
+def TimeseriesTensor(path, experiments: list, seq_len:int, stride=10) -> torch.Tensor:
 
     tensors = TensorLoaderCp(path, experiments)  
-    shaper = Overlapper(seq_len = seq_len, stride = 10) 
+    shaper = Overlapper(seq_len, stride) 
 
     final_tensor = None        
     for tensor in tensors:
@@ -235,6 +255,113 @@ def TimeseriesPickeldTensor(folder_path, experiments: list) -> torch.Tensor:
         
     return t  
 
+def TimeseriesSampledTensorWithLabels(folder_path, experiments: list, samples: int) -> torch.Tensor:
+
+    tensors = TensorLoaderPickeld(folder_path, experiments)  
+
+    sampler = RandomSampler(samples)
+    
+    t = None        
+    labels = []
+    # print(samples)
+    # print(len(experiments))
+    for i in range(len(experiments)):
+        # print([Damage_Classes.ex2label(experiments[i])]*samples)
+
+        tensor = sampler(tensors[i])
+        labels += [Damage_Classes.ex2label(experiments[i])]*samples
+
+        if t is None:
+            t = tensor 
+        else:
+            t = torch.cat((t , tensor), dim = 0)
+    labels = torch.Tensor(labels)
+    return t, labels 
+
+def TimeseriesSampledCpWithLabels(folder_path, experiments: list, samples: int, seq_len: int):
+
+    tensors = TensorLoaderCp(folder_path, experiments)  
+    shaper = Overlapper(seq_len=seq_len, stride=seq_len//2) 
+    sampler = RandomSampler(samples)
+    
+    t = None        
+    labels = []
+    for i in range(len(experiments)):
+                   
+        tensor = sampler(shaper(tensors[i]))
+        labels += [Damage_Classes.ex2label(experiments[i])]*samples
+
+        if t is None:
+            t = tensor 
+        else:
+            t = torch.cat((t , tensor), dim = 0)
+
+    labels = torch.Tensor(labels)
+    return t, labels 
+
+# Not used at the moment
+class TimeSeriesPickeld(Dataset):
+    def __init__(self, path, experiments: list) -> None:
+        self._path = path
+        self._exp = experiments
+        self.tensors = TensorLoaderPickeld(self._path, experiments)  
+        
+        self._stride = 10
+        self._seq_len = self.tensors[0].size(dim=2)
+        # counting all samples to determine dataset length / nr of sequences
+        self._c_seq = []
+        self._datasetlen = 0
+        for t in self.tensors:
+            seq = t.size(dim=0)
+            self._datasetlen += seq 
+            self._c_seq.append(self._datasetlen)
+        
+        print("\n---- Summary Import ----")
+        print(f"Path: {self._path}")
+        print(f"Experiments: {self._exp}")
+        print(f"Stride: {self._stride}")
+        print(f"Sequences: {self._c_seq}")
+        print(f"Length: {self._datasetlen}")
+        print(f"Seq Length {self._seq_len}")
+        print("------------------------\n")
+
+        # print(f"Test Value: {self.tensors[0][0].shape}")
+        #
+        # print("------------------------\n")
+    def __len__(self):
+        return self._datasetlen
+
+    def __getitem__(self, seq_idx: int):
+
+        def get_experiment_index(index: int) -> int:
+            experiment_index = 0
+            for seq in self._c_seq:
+                if index < seq:
+                    return experiment_index
+                experiment_index +=1
+            raise Exception("Index out of bounds")
+
+        exp_idx = get_experiment_index(seq_idx)
+        exp = self._exp[exp_idx]
+        
+        # Index calculation
+        if exp_idx-1 == -1:
+            index_in_exp = seq_idx
+        else:
+            index_in_exp = seq_idx - self._c_seq[exp_idx-1]
+
+        mvts = self.tensors[exp_idx][index_in_exp]
+
+        debug = False 
+        if debug:
+            print("Debug: ")
+            print(f"seq_idx: {seq_idx}")
+            print(f"exp_idx: {exp_idx}")
+            print(f"exp: {exp}")
+            print(f"index in experiment: {index_in_exp}")
+            print(f"MVTS shape: {mvts.shape}")
+        
+        return mvts, Damage_Classes.ex2label(exp)
 
 if __name__ == "__main__":
     # timeseries = CpDataset([2,3], 200)
@@ -246,5 +373,10 @@ if __name__ == "__main__":
 
     # t = TimeseriesTensor("../data/AoA_0deg_Cp/", [3], 200)
     # print(t.shape)
-
+    seq_len = 2000
+    test_exp = [5,9,14,18,24,28,33,37,43,47,52,56,62,66,71,75,81,85,90,94,100,104,109,113]
+    path_data = '../data/cp_data_true/AoA_0deg_Cp'
+    train_x, train_labels = TimeseriesSampledCpWithLabels(path_data, test_exp, 10, seq_len)
+    # x, labels = TimeseriesSampledTensorWithLabels(path_path, train_exp, 10, cp=True, seq_len=seq_len)
+    print(train_x.shape)
     pass

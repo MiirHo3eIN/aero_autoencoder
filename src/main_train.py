@@ -19,7 +19,6 @@ import utils
 path_Cp_data = '../data/cp_data_true/AoA_0deg_Cp/'
 
 # define training and test set based on design of experiment excel document
-
 train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88, 89,93,98,99,102,107,108,111, 112]
 valid_exp = [16,27,54,61,92,103]
 
@@ -146,16 +145,18 @@ def train(model, train_x, valid_x, epochs, alpha):
 
     return train_time, train_total_loss, valid_total_loss 
 
-def save_model(model, archID, seq_len, train_loss, valid_loss, train_time):
+def save_model(model, archID, seq_len, train_loss, valid_loss, train_time, interactive=True):
+    l_channels = "unknown"
+    l_seq_len = "unknown"
+    if interactive:
+        answer = input("Do you want to save the Model? (y/n): ")
+        if answer == "n": exit()
 
-    answer = input("Do you want to save the Model? (y/n): ")
-    if answer == "n": exit()
-
-    answer = input("Please enter the latent channels? [0-100]: ")
-    l_channels = utils.checkNumber(answer)
+        answer = input("Please enter the latent channels? [0-100]: ")
+        l_channels = utils.checkNumber(answer)
     
-    answer = input("Please enter the latent sequence length? [0-10000]: ")
-    l_seq_len = utils.checkNumber(answer)
+        answer = input("Please enter the latent sequence length? [0-10000]: ")
+        l_seq_len = utils.checkNumber(answer)
 
     model_number = utils.generate_hexadecimal()
 
@@ -182,20 +183,26 @@ if __name__ == "__main__":
     seq_len_list = [200, 400, 600, 800 ]
     batch_size = [32, 64, 128, 256, 512, 1024]
     epochs = [10, 100, 120, 160 ,200]
-    alpha = [0.3, 0.5, 0.9]
+    alphas = [0.3, 0.5, 0.9]
 
-    seq_len = seq_len_list[0]
-
-    archID = "3ec9"
-
+    archID = "d6eb"
     model = Model(archID)
     model.to(device)
 
-    summary(model, input_size=(1, 36, seq_len))
+    summary(model, input_size=(1, 36, seq_len_list[0]))
 
-    train_x, valid_x = initData(seq_len=seq_len, stride=10, batch_size=batch_size[0])
+    if True:
+        train_x, valid_x = initData(seq_len=seq_len_list[0], stride=10, batch_size=batch_size[0])
 
+        train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alphas[1])
 
-    train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alpha[-1])
+        save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time)
 
-    save_model(model, archID, seq_len, train_total_loss[-1], valid_total_loss[-1], train_time)
+    if False:
+        seq = seq_len_list[0]
+        batch = batch_size[0]
+        epoch = epochs[1]
+        for alpha in alphas:
+            train_x, valid_x = initData(seq_len=seq, stride=10, batch_size=batch)
+            train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epoch, alpha)
+            save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)

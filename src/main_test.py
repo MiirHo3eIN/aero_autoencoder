@@ -43,12 +43,14 @@ def model_eval(md): # md = dict containing all infos about a model
     print(f"Tested Model: {md['model_id']} with MSE: {output:.5}")
     updateMSE(md['model_id'], output.item())
     # Print the Results into a Plot
-
+    
+    cf = (36*md['window_size'])/(md['latent_channels'] * md['latent_seq_len'])
+    # cf =8 
     sensor = 17
     sup_title = f"Model: {md['model_id']}"
-    infos = f"Architecture: {md['arch_id']} | Sensor: {sensor} \n Seq. Length: {md['window_size']} | Latent Size: {md['latent_channels']} x {md['latent_seq_len']} \n MSE: {output}"
+    infos = f"Architecture: {md['arch_id']} | Sensor: {sensor} \n Seq. Length: {md['window_size']} | Latent Size: {md['latent_channels']} x {md['latent_seq_len']} \n MSE: {output:.03} | Compression F.: {cf}"
     with sns.plotting_context("poster"):
-        sns.set(rc={'figure.figsize':(15,8.27)})
+        sns.set(rc={'figure.figsize':(30,8.27)})
         plt.figure()
         plt.plot(test_x[0, sensor-1, :].detach().numpy(), color = 'green', label = 'original')
         plt.plot(test_x_hat[0, sensor-1, :], color = 'red', label = 'reconstructed signal')
