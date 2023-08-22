@@ -49,9 +49,9 @@ class reconstruction_loss(nn.Module):
         l1_loss = self.criterion2(x, y)
         return (l1_loss + self.alpha*mse_loss) / (self.alpha)
 
-
+      
 def initData(seq_len, stride, batch_size):
-
+  
     print("-"*50)
     print(f"Initilaize Datasets")
     train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len= seq_len)
