@@ -69,18 +69,4 @@ def model_eval(md): # md = dict containing all infos about a model
 
 if __name__ == "__main__":
     model_dict = modelChooser()
-
     model_eval(model_dict)
-    # cnn = [ "CA5B:E21B:71ED:3A1C", "F06D:D524:BFD6:232E", "D86A:2185:C32B:7239", "A3B3:8C1F:43AC:7718", "B4AD:31CC:3620:B782"] 
-    # tiny_cnn = ["7547:B8DA:C870:507A", "829C:AF16:5D58:E61C", "C019:A640:74EF:D675", "102E:5B5E:C956:FD77"]
-    # model_eval(tiny_cnn[3])
-    # model_eval("8363:802A:3AC2:C596")
-    # model_eval("D9F2:0A27:942A:1DA0")
-    # model_eval("4E09:4C41:54E0:9BF9")
-    # model_eval("372D:4517:E7D3:34E9")
-    # model_eval(tiny_cnn[0])
-    # for model in cnn:
-    #     model_eval(model)
- 
-    # for model in tiny_cnn:
-        # model_eval(model)
