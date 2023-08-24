@@ -186,13 +186,13 @@ if __name__ == "__main__":
     alphas = [0.3, 0.5, 0.9]
 
     archID = "d6eb"
-    model = Model(archID)
+    model = Model(archID, 800, 100)
     model.to(device)
 
     summary(model, input_size=(1, 36, seq_len_list[0]))
 
     if True:
-        train_x, valid_x = initData(seq_len=seq_len_list[0], stride=10, batch_size=batch_size[0])
+        train_x, valid_x = initData(seq_len=seq_len_list[0], stride=10, batch_size=batch_size[1])
 
         train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alphas[1])
 
