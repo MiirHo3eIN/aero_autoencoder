@@ -867,14 +867,14 @@ def Model(arch_id, d_input= 800, d_latent = 100):
     return arch[arch_id]()
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    input_x = torch.randn(10, 36, 200).to(device)
+#     input_x = torch.randn(10, 36, 200).to(device)
 
-    print(f"Input: {input_x.shape}")
-    dut = Model('bded')
-    summary(dut, input_size = input_x.shape)
-    output = dut(input_x)
+#     print(f"Input: {input_x.shape}")
+#     dut = Model('bded')
+#     summary(dut, input_size = input_x.shape)
+#     output = dut(input_x)
 
-    print(f"Outputto: {output.shape}")
+#     print(f"Outputto: {output.shape}")
 

@@ -16,7 +16,7 @@ import utils
 
 # User input
 
-path_Cp_data = '../data/cp_data_true/AoA_0deg_Cp/'
+path_Cp_data = '../data/AoA_0deg_Cp'
 
 # define training and test set based on design of experiment excel document
 train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88, 89,93,98,99,102,107,108,111, 112]
@@ -185,11 +185,11 @@ if __name__ == "__main__":
     epochs = [10, 100, 120, 160 ,200]
     alphas = [0.3, 0.5, 0.9]
 
-    archID = "d6eb"
+    archID = "6424"
     model = Model(archID, 800, 100)
     model.to(device)
 
-    summary(model, input_size=(1, 36, seq_len_list[0]))
+    summary(model, input_size=(1, seq_len_list[-1]))
 
     if True:
         train_x, valid_x = initData(seq_len=seq_len_list[0], stride=10, batch_size=batch_size[1])
