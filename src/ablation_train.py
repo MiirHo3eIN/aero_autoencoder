@@ -167,8 +167,8 @@ if __name__ == "__main__":
 
 
     model_id = utils.generateHexadecimal()
-    arch_id = "38eb"
-    alpha = alphas[0]
+    arch_id = "5b05"
+    alpha = alphas[2]
     epoch = epochs[1]
     batch_size = batch_sizes[0]
 

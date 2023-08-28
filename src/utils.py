@@ -32,6 +32,17 @@ def _append_to_csv(data: dict, file) -> None:
         FS.close()
 
 
+def loadFileToDf(file):
+
+    # if file is none the default file is used
+    if file is None: file = "../training_results.csv"
+
+    # check if file exists
+    if not os.path.isfile(file): raise Exception()
+
+    return pd.read_csv(file)
+
+    
 def _create_csv(data: dict, file) -> None:
     df = pd.DataFrame.from_dict(data, orient = "index").T.to_csv(file, header = True, index = False)
     print("Created the csv file is as follows:")
@@ -53,8 +64,7 @@ def addModel(data, file=None):
 
 
 def updateMSE(model_id, mse, file=None):
-    if file is None: file = "../training_results.csv"
-    df = pd.read_csv(file)
+    df = loadFileToDf(file)
 
     # check if the mse columns already exists
     if not 'mse' in df.columns:
@@ -65,8 +75,7 @@ def updateMSE(model_id, mse, file=None):
 
 
 def modelChooser(file=None):
-    if file is None: file = "../training_results.csv"
-    df = pd.read_csv(file)
+    df = loadFileToDf(file)
     options = []
     model_ids = []
     for row in df.iterrows():
@@ -78,6 +87,14 @@ def modelChooser(file=None):
 
     model_id = model_ids[menu_entry_index]
     return df.loc[df['model_id'] == model_id].to_dict(orient='index')[menu_entry_index]
+
+def selectModels(key: str, value, file=None):
+    print(f"Key: {key}")
+    print(f"Value: {value}")
+    df = pd.read_csv(file)
+    print(df)
+    xx = df.loc[df[key] == value]
+    print(xx)
 
 
 def checkNumber(string: str) -> int:
