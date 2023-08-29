@@ -21,12 +21,14 @@ def criterion(x, x_hat):
 def model_eval(md): # md = dict containing all infos about a model
     
     # Hardcoded Data
-    path_Cp_data = '../../data/cp_data/cp_data_true/AoA_0deg_Cp'
+    path_Cp_data = '../data/cp_data/AoA_0deg_Cp'
     path_models = f"../trained_models/{md['model_id']}.pt"
     test_exp = [5,9,14,18,24,28,33,37,43,47,52,56,62,66,71,75,81,85,90,94,100,104,109,113]
 
     # Load the Testdata
-    test_x = TimeseriesTensor(path_Cp_data, test_exp, seq_len = md['window_size'])    
+    # seq_len = md['window_size']
+    seq_len = 800
+    test_x = TimeseriesTensor(path_Cp_data, test_exp, seq_len=seq_len, stride=20)    
     print(f"Test data loaded with shape: {test_x.shape}")
 
     # Load the Model
@@ -46,9 +48,9 @@ def model_eval(md): # md = dict containing all infos about a model
     
     cf = (36*md['window_size'])/(md['latent_channels'] * md['latent_seq_len'])
     # cf =8 
-    sensor = 17
+    sensor = 2
     sup_title = f"Model: {md['model_id']}"
-    infos = f"Architecture: {md['arch_id']} | Sensor: {sensor} \n Seq. Length: {md['window_size']} | Latent Size: {md['latent_channels']} x {md['latent_seq_len']} \n MSE: {output:.03} | Compression F.: {cf}"
+    infos = f"Architecture: {md['arch_id']} | Sensor: {sensor} \n Seq. Length: {seq_len} | Latent Size: {md['latent_channels']} x {seq_len} \n MSE: {output:.03} | Compression F.: {cf}"
     with sns.plotting_context("poster"):
         sns.set(rc={'figure.figsize':(30,8.27)})
         plt.figure()
