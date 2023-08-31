@@ -12,11 +12,27 @@ from dataset import *
 from ae_model import Model
 from utils import updateMSE, modelChooser
 
+def plotMSE(mse):
+    y = mse.tolist()
+    x = [i for i in range(1,37)]
+    fig, ax = plt.subplots()
 
-def criterion(x, x_hat):
-    mse = nn.MSELoss()
-    return mse(x.float(), x_hat.float())
+    ax.bar(x, y)  
 
+    ax.set_ylabel('MSE')
+    ax.set_title('MSE per sensor')
+
+    plt.show()
+
+
+def mse(x, x_hat):
+    mse_ = nn.MSELoss(reduction="none")
+    return mse_(x.float(), x_hat.float())
+
+def msePerSensor(x, x_hat):
+
+    mse = nn.MSELoss(reduction="none")
+    return torch.mean(mse(x,x_hat),dim=[0, 2]) 
 
 def model_eval(md): # md = dict containing all infos about a model
     
@@ -41,28 +57,31 @@ def model_eval(md): # md = dict containing all infos about a model
         test_x_hat = model(test_x.float())
     
     # Calculate the metric
-    output = criterion(test_x.float(), test_x_hat.float())
-    print(f"Tested Model: {md['model_id']} with MSE: {output:.5}")
-    updateMSE(md['model_id'], output.item())
+    output = msePerSensor(test_x.float(), test_x_hat.float())
+    print(f"Tested Model: {md['model_id']} with MSE: {output.shape}")
+
+    plotMSE(output)
+
+    # updateMSE(md['model_id'], output.item())
     # Print the Results into a Plot
     
-    cf = (36*md['window_size'])/(md['latent_channels'] * md['latent_seq_len'])
-    # cf =8 
-    sensor = 2
-    sup_title = f"Model: {md['model_id']}"
-    infos = f"Architecture: {md['arch_id']} | Sensor: {sensor} \n Seq. Length: {seq_len} | Latent Size: {md['latent_channels']} x {seq_len} \n MSE: {output:.03} | Compression F.: {cf}"
-    with sns.plotting_context("poster"):
-        sns.set(rc={'figure.figsize':(30,8.27)})
-        plt.figure()
-        plt.plot(test_x[0, sensor-1, :].detach().numpy(), color = 'green', label = 'original')
-        plt.plot(test_x_hat[0, sensor-1, :], color = 'red', label = 'reconstructed signal')
-        plt.legend()
-        plt.suptitle(sup_title)
-        plt.title(infos)
-        plt.xlabel("Samples")
-        plt.ylabel("Cp")
-        plt.savefig(f"../plots/tests/test_{md['model_id']}.png")
-        plt.show()
+    # cf = (36*md['window_size'])/(md['latent_channels'] * md['latent_seq_len'])
+    # # cf =8 
+    # sensor = 2
+    # sup_title = f"Model: {md['model_id']}"
+    # infos = f"Architecture: {md['arch_id']} | Sensor: {sensor} \n Seq. Length: {seq_len} | Latent Size: {md['latent_channels']} x {seq_len} \n MSE: {output:.03} | Compression F.: {cf}"
+    # with sns.plotting_context("poster"):
+    #     sns.set(rc={'figure.figsize':(30,8.27)})
+    #     plt.figure()
+    #     plt.plot(test_x[0, sensor-1, :].detach().numpy(), color = 'green', label = 'original')
+    #     plt.plot(test_x_hat[0, sensor-1, :], color = 'red', label = 'reconstructed signal')
+    #     plt.legend()
+    #     plt.suptitle(sup_title)
+    #     plt.title(infos)
+    #     plt.xlabel("Samples")
+    #     plt.ylabel("Cp")
+    #     plt.savefig(f"../plots/tests/test_{md['model_id']}.png")
+    #     plt.show()
 
      
 
