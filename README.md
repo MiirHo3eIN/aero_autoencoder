@@ -2,7 +2,7 @@
 
 This project is intended to compress the pressure sensors data of a wind Turbine at the edge near the sensors. It is a Multivariate Time Series data with 36 channels input. Deploying CNNs with residual blocks are used in this part of the project to obtain a reconstructed signal which can be used to detect anomalies over the blade.  
 
-![Logo](plots/encoder_decoder.png)
+![Logo](general_plots/encoder_decoder.png)
 
 
 ## Requirements
