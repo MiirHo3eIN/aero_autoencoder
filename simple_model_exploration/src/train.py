@@ -10,32 +10,19 @@ import shutup
 shutup.please()
 
 # Custom imports
-from dataset import * 
-from ae_model import *
-import utils 
+from models import Model
+import sys
+sys.path.append("../../aerolib")
+import modelManagement as mm
+from dataset import TimeseriesTensor
 
-# User input
-
-path_Cp_data = '../data/cp_data_true/AoA_0deg_Cp/'
+path_Cp_data = '../../data/cp_data/AoA_0deg_Cp'
 
 # define training and test set based on design of experiment excel document
 train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88, 89,93,98,99,102,107,108,111, 112]
 valid_exp = [16,27,54,61,92,103]
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-data_single_node = {
-    "model_id": None,
-    "arch_id": None,
-    "activation": None,
-    "window_size": None,
-    "latent_channels": None,
-    "latent_seq_len": None,
-    "train_loss": None,
-    "valid_loss": None,
-    "train_time": None,
-    "mse": None
-}
 
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
@@ -50,28 +37,28 @@ class reconstruction_loss(nn.Module):
         return (l1_loss + self.alpha*mse_loss) / (self.alpha)
 
       
-def initData(seq_len, stride, batch_size):
+def initData(md):
   
     print("-"*50)
     print(f"Initilaize Datasets")
-    train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len= seq_len)
-    valid_x = TimeseriesTensor(path_Cp_data,valid_exp, seq_len= seq_len)
+    train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len=md.window_size)
+    valid_x = TimeseriesTensor(path_Cp_data,valid_exp, seq_len=md.window_size)
     train_x, valid_x = train_x.to(device), valid_x.to(device)
 
     print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[2]} sequence length")
     print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[2]} sequence length")
 
     dataset_train = TensorDataset(train_x , train_x)
-    train_loader = DataLoader(dataset_train, batch_size = batch_size, shuffle = False)
+    train_loader = DataLoader(dataset_train, batch_size=md.batch_size, shuffle=False)
 
     dataset_valid = TensorDataset(valid_x, valid_x)
-    valid_loader = DataLoader(dataset_valid, batch_size = batch_size, shuffle = False)
+    valid_loader = DataLoader(dataset_valid, batch_size=md.batch_size, shuffle=False)
     del train_x, valid_x
     
     print("\n")
     return train_loader, valid_loader
 
-def train(model, train_x, valid_x, epochs, alpha):
+def train(model, md, train_x, valid_x):
 
     print("-"*50)
     print("Setup Training...")
@@ -79,10 +66,10 @@ def train(model, train_x, valid_x, epochs, alpha):
     betas = (0.9, 0.98)
     eps = 1e-9
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=betas, eps=eps)
-    criterion = reconstruction_loss(alpha=alpha)
+    criterion = reconstruction_loss(alpha=md.alpha)
     print(f"Used Device: {device}")
     print(f"Optimizer | lr: {lr} | betas: {betas} | eps: {eps}")
-    print(f"Criterion alpha: {alpha}")
+    print(f"Criterion alpha: {md.alpha}")
     print("\n")
 
 
@@ -93,9 +80,9 @@ def train(model, train_x, valid_x, epochs, alpha):
     print("-"*50)
     print("Starting Training...")
     time_start = time.time()
-    for epoch in np.arange(0, epochs):
+    for epoch in np.arange(0, md.epochs):
         
-        print(f"Epoch: {epoch+1}/{epochs}", end="")
+        print(f"Epoch: {epoch+1}/{md.epochs}", end="")
 
         ### TRAINING PHASE ###
 
@@ -141,41 +128,29 @@ def train(model, train_x, valid_x, epochs, alpha):
         train_epoch_loss, valid_epoch_loss = [], []
         train_batch_loss, valid_batch_loss = [], []
     time_end = time.time()
-    train_time = time_end - time_start
 
-    return train_time, train_total_loss, valid_total_loss 
+    md.train_loss = train_total_loss[-1]
+    md.valid_loss = valid_total_loss[-1]
+    md.train_time = time_end - time_start
 
-def save_model(model, archID, seq_len, train_loss, valid_loss, train_time, interactive=True):
-    l_channels = "unknown"
-    l_seq_len = "unknown"
+def save_model(model, md, interactive=True):
     if interactive:
         answer = input("Do you want to save the Model? (y/n): ")
         if answer == "n": exit()
 
-        answer = input("Please enter the latent channels? [0-100]: ")
-        l_channels = utils.checkNumber(answer)
+        md.latent_channels = input("Please enter the latent channels? [0-100]: ")
     
-        answer = input("Please enter the latent sequence length? [0-10000]: ")
-        l_seq_len = utils.checkNumber(answer)
+        md.latent_seq_len = input("Please enter the latent sequence length? [0-10000]: ")
 
-    model_number = utils.generate_hexadecimal()
 
     print("-"*50)
-    print(f"Saving the model: {model_number}")
+    print(f"Saving the model: {md.model_id}")
 
-    torch.save(model.state_dict(), f"../trained_models/{model_number}.pt")
+    torch.save(model.state_dict(), f"../models/{md.model_id}.pt")
 
-    data_single_node["model_id"] = model_number
-    data_single_node["arch_id"] = archID
-    data_single_node["activation"] = "l1+0.9mse"
-    data_single_node["window_size"] = seq_len
-    data_single_node["latent_seq_len"] = l_seq_len
-    data_single_node["latent_channels"] = l_channels
-    data_single_node["train_loss"] = train_loss
-    data_single_node["valid_loss"] = valid_loss 
-    data_single_node["train_time"] = train_time
+    md.activation = "l1+0.9mse"
 
-    utils.write_to_csv(data_single_node)
+    mm.saveModel(md)
 
 
 if __name__ == "__main__":
@@ -184,25 +159,20 @@ if __name__ == "__main__":
     batch_size = [32, 64, 128, 256, 512, 1024]
     epochs = [10, 100, 120, 160 ,200]
     alphas = [0.3, 0.5, 0.9]
+    
+    md = mm.createNewModel()
+    md.arch_id = "d6eb"
+    md.epochs = epochs[0]
+    md.window_size = seq_len_list[0]
+    md.batch_size = batch_size[0]
+    md.alpha = alphas[2]
 
-    archID = "d6eb"
-    model = Model(archID)
+    model = Model(md.arch_id)
     model.to(device)
+    print(md)
+    summary(model, input_size=(1, 36, md.window_size))
 
-    summary(model, input_size=(1, 36, seq_len_list[0]))
+    train_x, valid_x = initData(md)
 
-    if True:
-        train_x, valid_x = initData(seq_len=seq_len_list[0], stride=10, batch_size=batch_size[0])
-
-        train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alphas[1])
-
-        save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time)
-
-    if False:
-        seq = seq_len_list[0]
-        batch = batch_size[0]
-        epoch = epochs[1]
-        for alpha in alphas:
-            train_x, valid_x = initData(seq_len=seq, stride=10, batch_size=batch)
-            train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epoch, alpha)
-            save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)
+    train(model, md, train_x, valid_x)
+    save_model(model, md)

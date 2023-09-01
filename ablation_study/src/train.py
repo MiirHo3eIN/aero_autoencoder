@@ -6,41 +6,25 @@ from torchinfo import summary
 from torch.utils.data import TensorDataset, DataLoader 
 
 import time 
-
+import sys
 import shutup 
 shutup.please()
 
 # Custom imports
-from dataset import * 
-from ablation_models import *
-import utils 
+sys.path.append("../../aerolib")
+import modelManagement as mm
+import dataset
+import classifiers 
+from models import Model
 
 #######################################################################################################
-path_Cp_data = '../data/cp_data_true/AoA_0deg_Cp/'
+path_Cp_data = '../../data/cp_data/AoA_0deg_Cp'
 
 # define training and test set based on design of experiment excel document
 train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88, 89,93,98,99,102,107,108,111, 112]
 valid_exp = [16,27,54,61,92,103]
 #######################################################################################################
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-data_single_node = {
-    "model_id": None,
-    "arch_id": None,
-    "parameters": None,
-    "alpha": None,
-    "epochs": None, 
-    "batch_size": None,
-    "activation": None,
-    "window_size": None,
-    "latent_channels": None,
-    "latent_seq_len": None,
-    "train_loss": None,
-    "valid_loss": None,
-    "train_time": None,
-    "mse": None
-}
-
 
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
@@ -61,8 +45,8 @@ def initData(seq_len, batch_size):
   
     print("-"*50)
     print(f"Initilaize Datasets")
-    train_x = TimeseriesTensor(path_Cp_data, train_exp, seq_len=seq_len, stride=20).to(device)
-    valid_x = TimeseriesTensor(path_Cp_data, valid_exp, seq_len=seq_len, stride=20).to(device)
+    train_x = dataset.TimeseriesTensor(path_Cp_data, train_exp, seq_len=seq_len, stride=20).to(device)
+    valid_x = dataset.TimeseriesTensor(path_Cp_data, valid_exp, seq_len=seq_len, stride=20).to(device)
 
     print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[2]} sequence length")
     print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[2]} sequence length")
@@ -166,40 +150,35 @@ if __name__ == "__main__":
     alphas = [0.3, 0.5, 0.9]
 
 
-    model_id = utils.generateHexadecimal()
-    arch_id = "5b05"
-    alpha = alphas[2]
-    epoch = epochs[1]
-    batch_size = batch_sizes[0]
+    md = mm.createNewModel()
+    md.arch_id = "068f"
+    md.alpha = alphas[2]
+    md.epoch = epochs[0]
+    md.batch_size = batch_sizes[0]
+    md.activation = "l1+alpha*mse"
 
-    model = Model(arch_id)
+
+    # This number is fixed -> see rocket repo
+    md.window_size = 800
+
+    model = Model(md.arch_id)
     model.to(device)
 
-    latent = model.getLatentDim()
-    paras = sum(p.numel() for p in model.parameters())
+    [md.latent_channels, md.latent_seq_len] = model.getLatentDim()
+    md.parameters = sum(p.numel() for p in model.parameters())
 
     summary(model, input_size=(1, 36, seq_len))
 
-    train_x, valid_x = initData(seq_len=seq_len, batch_size=batch_size)
-    results = train(model, train_x, valid_x, epoch, alpha)
+    train_x, valid_x = initData(seq_len=md.window_size, batch_size=md.batch_size)
+    results = train(model, train_x, valid_x, md.epoch, md.alpha)
 
     print("-"*50)
-    print(f"Saving the model: {model_id}")
+    print(f"Saving the model: {md.model_id}")
 
-    torch.save(model.state_dict(), f"../ablation_study/models/{model_id}.pt")
+    torch.save(model.state_dict(), f"../models/{md.model_id}.pt")
 
-    data_single_node["model_id"] = model_id 
-    data_single_node["arch_id"] = arch_id 
-    data_single_node["parameters"] = paras 
-    data_single_node["alpha"] = alpha 
-    data_single_node["epochs"] = epoch 
-    data_single_node["batch_size"] = batch_size 
-    data_single_node["activation"] = "l1+0.9mse"
-    data_single_node["window_size"] = seq_len
-    data_single_node["latent_channels"] = latent[0] 
-    data_single_node["latent_seq_len"] = latent[1] 
-    data_single_node["train_loss"] = results[2]
-    data_single_node["valid_loss"] = results[1] 
-    data_single_node["train_time"] = results[0] 
+    md.train_loss = results[2]
+    md.valid_loss = results[1] 
+    md.train_time = results[0] 
 
-    utils.addModel(data_single_node, file="../ablation_study/models.csv")
+    mm.saveModel(md)

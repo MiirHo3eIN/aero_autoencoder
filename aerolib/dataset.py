@@ -3,7 +3,7 @@ import os
 import pandas as pd 
 import torch 
 import torch.nn as nn
-from torch.utils.data import Dataset, Sampler
+from torch.utils.data import Dataset
 import random
 
 import shutup 

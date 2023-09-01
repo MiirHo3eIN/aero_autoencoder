@@ -1,0 +1,5 @@
+model_id,arch_id,parameters,alpha,epochs,batch_size,activation,window_size,latent_channels,latent_seq_len,train_loss,valid_loss,train_time,mse
+3D8D:D3A7:2885:C717,,0,0.0,0,0,,0,0,0,0.0,0.0,0.0,0.0
+DCDF:5FF2:658D:84D0,,0,0.0,0,0,,0,0,0,0.0,0.0,0.0,3.0
+4A0A:BBA9:29F2:D09B,,0,0.0,0,0,,0,0,0,0.0,0.0,0.0,0.0
+6BF4:D21A:17C9:BA84,,0,0.0,0,0,,0,0,0,0.0,0.0,0.0,0.0
