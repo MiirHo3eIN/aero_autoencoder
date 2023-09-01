@@ -1,4 +1,5 @@
 import torch 
+import numpy as np
 import torch.nn as nn
 import pickle
 import random
@@ -10,22 +11,26 @@ import shutup
 shutup.please()
 
 # Custom imports
-from dataset import *  
-from ablation_models import Model
-from utils import updateMSE, modelChooser, selectModels, loadFileToDf
+import os
+import sys
+sys.path.append("../../aerolib")
+import modelManagement as mm
+import dataset
+import classifiers 
+from models import Model
 
 # Hardcoded Data
-path_Cp_data = '../../data/cp_data/cp_data_true/AoA_0deg_Cp/'
-path_models = '../ablation_study/models/'
+path_Cp_data = '../../data/cp_data/AoA_0deg_Cp/'
+path_models = '../models/'
 
 title_size = 20
 label_size = 12
 
 def loadData(md):
     # check if results exists
-    file = f"../ablation_study/results/{md['model_id']}.pt"    
+    file = f"../results/{md.model_id}.pt"    
     if not os.path.isfile(file):
-        print(f"Results not present for model {md['model_id']}")
+        print(f"Results not present for model {md.model_id}")
     
     # Read dictionary pkl file
     with open(file, 'rb') as fp:
@@ -56,15 +61,15 @@ def modelText(ax, md, data):
     right = left + width
     top = bottom + height
 
-    t = f'''Model ID: {md['model_id']} 
-Arch ID: {md['arch_id']}
-Parameters: {md['parameters']} 
-Alpha: {md['alpha']}
-Epochs: {md['epochs']} 
-Batch Size: {md['batch_size']} 
-Window Size: {md['window_size']}
-Latent Channels: {md['latent_channels']}
-Latent Sequence Size: {md['latent_seq_len']}
+    t = f'''Model ID: {md.model_id} 
+Arch ID: {md.arch_id}
+Parameters: {md.parameters} 
+Alpha: {md.alpha}
+Epochs: {md.epochs} 
+Batch Size: {md.batch_size} 
+Window Size: {md.window_size}
+Latent Channels: {md.latent_channels}
+Latent Sequence Size: {md.latent_seq_len}
 
 Classification:
 Ridge accuracy: {data['ridge']['acc'][0]:.3}
@@ -126,9 +131,7 @@ def plotXY(ax, x, y, alphas):
 
 def plotAblationSeq():
 
-
-    file="../ablation_study/models.csv"
-    df = loadFileToDf(file)
+    df = mm.loadDF()
     
     # the used sequence lengths
     s = [25, 50, 100, 200, 400]
@@ -139,7 +142,7 @@ def plotAblationSeq():
     for idx, a in enumerate(alphas):
         for seq in s:
             m_id = searcModel(df, a=a, s=seq, c=36)
-            md = getModelDict(df, m_id) 
+            md = mm.loadByID(m_id) 
             data = loadData(md)
             acc[idx].append(data['ridge']['acc'][0])
             pre[idx].append(data['ridge']['per'][0])
@@ -172,8 +175,7 @@ Classier is trained on the reconstructed data
 
 def plotAblationCh():
 
-    file="../ablation_study/models.csv"
-    df = loadFileToDf(file)
+    df = mm.loadDF()
     
     # the used sequence lengths
     ch = [1, 2, 5, 9, 18]
@@ -184,7 +186,7 @@ def plotAblationCh():
     for idx, a in enumerate(alphas):
         for c in ch:
             m_id = searcModel(df, a=a, s=800, c=c)
-            md = getModelDict(df, m_id) 
+            md = mm.loadByID(m_id) 
             data = loadData(md)
             acc[idx].append(data['ridge']['acc'][0])
             pre[idx].append(data['ridge']['per'][0])
@@ -219,9 +221,8 @@ Original -> Encode -> Latent -> Decode -> Reconstructed -> Rocket -> Feature Map
 
 
 if __name__ == "__main__":
-    md = modelChooser(file="../ablation_study/models.csv")
+    md = mm.modelChooser()
     data_dict = loadData(md)
-
     plotSingleModel(md, data_dict)
 
     # plotAblationSeq()
