@@ -41,100 +41,13 @@ class AE_XL(nn.Module):
         return self.decoder(self.encoder(x))
 
 
-class AE_a619(AE_XL):
+class AE_d892(AE_XL):
     def __init__(self) -> None:
-        ch = [36, 36, 27, 27, 18, 18]
+        ch = [36, 36, 27, 27, 18, 18, 9, 9]
         super().__init__(ch)
-
-class AE_4e36(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.2
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_d12d(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 27, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.2
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_264d(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 36, 27, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.2
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_2c81(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 36, 27, 27, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.2
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_7f8a(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 36, 27, 27, 18, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.2
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_4f53(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.4
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_a8e1(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.6
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
-
-class AE_1b45(AE_XL):
-    def __init__(self) -> None:
-        ch = [36, 18]
-        super().__init__(ch)
-        self.dropout_p = 0.8
-        self.dropout =  nn.Dropout(self.dropout_p)
-    def forward(self, x: torch.Tensor):
-        x = self.dropout(x)
-        return self.decoder(self.encoder(x))
 
 arch = {'a619': AE_a619, # simple big model
         '4e36': AE_4e36, # input dropout
-        'd12d': AE_d12d, # input dropout
-        '264d': AE_264d, # input dropout
-        '2c81': AE_2c81, # input dropout
-        '7f8a': AE_7f8a, # input dropout
-        '4f53': AE_4f53, # input dropout
-        'a8e1': AE_a8e1, # input dropout
-        '1b45': AE_1b45, # input dropout
         }
 
 def Model(arch_id):
