@@ -3,13 +3,6 @@ import torch.nn as nn
 import time
 import numpy as np
 
-def torch_eval(model, x_input: torch.Tensor) -> torch.Tensor:
-
-    with torch.no_grad():
-        model.eval() 
-        x_hat = model(x_input.float())
-    return x_hat
-
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
         super().__init__(*args, **kwargs)
@@ -97,4 +90,24 @@ def train(md, model, train_x, valid_x):
     md.train_loss = train_total_loss[-1]
     md.valid_loss = valid_total_loss[-1]
     md.train_time = time_end - time_start
+
+
+
+def calculateMSE(x, x_hat):
+
+    MSE = nn.MSELoss(reduction="none")
+
+    mse_per_window = torch.mean(MSE(x,x_hat),dim=[2]) 
+    mse_per_sensor = torch.mean(mse_per_window,dim=[0]) 
+    mse_overall = torch.mean(mse_per_sensor,dim=[0])
+    
+    # Find the worst window
+    worst_windows_values, worst_windows_idx = torch.max(mse_per_window, dim=0, keepdim=True)
+    _ , worst_sensor_idx = torch.max(worst_windows_values, dim=1, keepdim=True)
+    s_idx = worst_sensor_idx[0].item()
+    w_idx = worst_windows_idx[0][s_idx].item()
+
+    return mse_overall.item(), mse_per_sensor.tolist(), [w_idx, s_idx]
+
+
 

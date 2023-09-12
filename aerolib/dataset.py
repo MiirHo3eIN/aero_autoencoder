@@ -131,6 +131,17 @@ class CpDataset(Dataset):
         
         return mvts, Damage_Classes.ex2label(exp)
 
+class BiasFree(nn.Module):
+    
+    def __init__(self, seq_len: int, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.dim = seq_len
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        bias_per_window = torch.mean(x,dim=[2]) 
+        seq, sensors = bias_per_window.shape
+        bias_per_window = bias_per_window[:, :, None].expand([seq, sensors, self.dim]) 
+        return torch.sub(x, bias_per_window), bias_per_window
 
 class Overlapper(nn.Module):
     

@@ -1,0 +1,1 @@
+model_id,arch_id,parameters,alpha,epochs,batch_size,activation,window_size,latent_channels,latent_seq_len,train_loss,valid_loss,train_time,mse
