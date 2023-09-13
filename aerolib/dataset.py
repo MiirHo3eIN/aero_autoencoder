@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 import random
+import shapers
 
 import shutup 
 shutup.please()
@@ -27,6 +28,13 @@ class Damage_Classes():
         for d_class in Damage_Classes.classes:
             if experiment in d_class[0]:
                 return d_class[1]
+
+    # experiment to desc
+    @staticmethod
+    def ex2desc(experiment):
+        for d_class in Damage_Classes.classes:
+            if experiment in d_class[0]:
+                return d_class[2]
 
     # label to experiments
     @staticmethod
@@ -131,56 +139,6 @@ class CpDataset(Dataset):
         
         return mvts, Damage_Classes.ex2label(exp)
 
-class BiasFree(nn.Module):
-    
-    def __init__(self, seq_len: int, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.dim = seq_len
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        bias_per_window = torch.mean(x,dim=[2]) 
-        seq, sensors = bias_per_window.shape
-        bias_per_window = bias_per_window[:, :, None].expand([seq, sensors, self.dim]) 
-        return torch.sub(x, bias_per_window), bias_per_window
-
-class Overlapper(nn.Module):
-    
-    def __init__(self, seq_len: int, stride: int, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.dim = seq_len
-        self.stride = stride   # Define the overlap stride
-
-    def forward(self, input_x: torch.Tensor) -> torch.Tensor:
-        nrows, ncolumns = input_x.shape
-        
-        # Calculate the number of overlapping sequences that can be extracted
-        N0 = (nrows - self.dim) // self.stride + 1
-
-        # Create overlapping sequences from the original data
-        overlapping_sequences = [input_x[i*self.stride:i*self.stride+self.dim, :].unsqueeze(0) for i in range(N0)]
-        final_tensor = torch.cat(overlapping_sequences, dim=0).permute(0, 2, 1)
-
-        return final_tensor
-
-class RandomSampler(nn.Module):
-    
-    def __init__(self, samples: int, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.samples = samples 
-
-    def forward(self, input_x: torch.Tensor) -> torch.Tensor:
-        nrows, ncolumns, x = input_x.shape
-        
-        # if there is less data than needed return everything
-        if nrows < self.samples:
-            return input_x
-
-        # sample
-        idx = random.sample(range(0, nrows), self.samples) 
-        idx.sort()
-        idx = torch.tensor(idx)
-        return torch.index_select(input_x, 0, idx) 
-
 class TensorLoaderPickeld():
     def __init__(self, path, experiments: list) -> None:
         self._path = path 
@@ -199,7 +157,7 @@ class TensorLoaderPickeld():
 
 class TensorLoaderCp():
 
-    def __init__(self, path, experiments: list) -> None:
+    def __init__(self, path, experiments: list, skiprows=2500) -> None:
         self._path = path 
         self._exp = experiments
         self._datasetlen = len(self._exp)
@@ -208,7 +166,7 @@ class TensorLoaderCp():
         del_cells = [0, 23]
         cols = np.arange(0, 38)
         self.use_cols = np.delete(cols, del_cells)
-        self._skiprows = 2500
+        self._skiprows = skiprows
 
     def __len__(self) -> int:
         return self._datasetlen
@@ -235,7 +193,7 @@ class TensorLoaderCp():
 def TimeseriesTensor(path, experiments: list, seq_len:int, stride=10) -> torch.Tensor:
 
     tensors = TensorLoaderCp(path, experiments)  
-    shaper = Overlapper(seq_len, stride) 
+    shaper = shapers.Overlapper(seq_len, stride) 
 
     final_tensor = None        
     for tensor in tensors:
@@ -270,7 +228,7 @@ def TimeseriesSampledTensorWithLabels(folder_path, experiments: list, samples: i
 
     tensors = TensorLoaderPickeld(folder_path, experiments)  
 
-    sampler = RandomSampler(samples)
+    sampler = shapers.RandomSampler(samples)
     
     t = None        
     labels = []
@@ -292,8 +250,8 @@ def TimeseriesSampledTensorWithLabels(folder_path, experiments: list, samples: i
 def TimeseriesSampledCpWithLabels(folder_path, experiments: list, samples: int, seq_len: int):
 
     tensors = TensorLoaderCp(folder_path, experiments)  
-    shaper = Overlapper(seq_len=seq_len, stride=seq_len//2) 
-    sampler = RandomSampler(samples)
+    shaper = shapers.Overlapper(seq_len=seq_len, stride=seq_len//2) 
+    sampler = shapers.RandomSampler(samples)
     
     t = None        
     labels = []
