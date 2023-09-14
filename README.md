@@ -17,7 +17,7 @@ python -m pip install -r requirements.txt
 
 ## Developement
 
-There are the following folders that same structure. These folders contain different experiments that were conducted.
+There are the following folders that have the same structure. These folders contain different experiments that were conducted.
 
 ```bash
 ├── ablation_study
