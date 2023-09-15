@@ -1,6 +1,7 @@
 import torch 
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 
 import shutup 
@@ -12,16 +13,16 @@ import models
 sys.path.append("../../aerolib")
 import modelManagement as mm
 import dataset
-import classifiers 
 
-def plotMSE(mse):
+def plotMSE(md, mse):
     y = mse.tolist()
     x = [i for i in range(1,37)]
 
     fig, ax = plt.subplots()
     ax.bar(x, y)  
     ax.set_ylabel('MSE')
-    ax.set_title('MSE per sensor')
+    ax.set_xlabel('Sensors')
+    ax.set_title(f'MSE per Sensor \n Model: {md.model_id}')
     plt.show()
 
 
@@ -57,8 +58,8 @@ def model_eval(md): # md = dict containing all infos about a model
         test_x_hat = model(test_x.float())
     
     # Calculate the metric
-    # output = msePerSensor(test_x.float(), test_x_hat.float())
-    # plotMSE(output)
+    output = msePerSensor(test_x.float(), test_x_hat.float())
+    plotMSE(md, output)
     output = mse(test_x.float(), test_x_hat.float())
     print(f"Tested Model: {md.model_id} with MSE: {output.shape}")
 
@@ -70,15 +71,12 @@ def model_eval(md): # md = dict containing all infos about a model
     cf = (36*md.window_size)/(md.latent_channels * md.latent_seq_len)
     # cf =8 
     sensor = 2
-    sup_title = f"Model: {md.model_id}"
-    infos = f"Architecture: {md.arch_id} | Sensor: {sensor} \n Seq. Length: {seq_len} | Latent Size: {md.latent_channels} x {seq_len} \n MSE: {output:.03} | Compression F.: {cf}"
+    infos = f"Model: {md.model_id} | Architecture: {md.arch_id} | Sensor: {sensor} | Seq. Length: {seq_len} \n Latent Size: {md.latent_channels} x {seq_len} | MSE: {output:.03} | Compression F.: {cf}"
     with sns.plotting_context("poster"):
-        sns.set(rc={'figure.figsize':(30,8.27)})
         plt.figure()
-        plt.plot(test_x[0, sensor-1, :].detach().numpy(), color = 'green', label = 'original')
-        plt.plot(test_x_hat[0, sensor-1, :], color = 'red', label = 'reconstructed signal')
+        plt.plot(test_x[0, sensor-1, 400:500].detach().numpy(), color = 'green', label = 'original')
+        plt.plot(test_x_hat[0, sensor-1, 400:500], color = 'red', label = 'reconstructed signal')
         plt.legend()
-        plt.suptitle(sup_title)
         plt.title(infos)
         plt.xlabel("Samples")
         plt.ylabel("Cp")
@@ -91,5 +89,10 @@ def model_eval(md): # md = dict containing all infos about a model
 
 
 if __name__ == "__main__":
+    font = {
+            'size'   : 28}
+
+    matplotlib.rc('font', **font)
+
     md = mm.modelChooser()
     model_eval(md)
