@@ -13,7 +13,9 @@ shutup.please()
 # This class is not meant to be instantiated
 # Its purpose is to have the mapping from experiments and labels 
 # in a centalized and accesible way
-class Damage_Classes():
+class retired_Damage_Classes():
+    
+
     # Name             [ Experiments , Label, Desctiption]
     classes  =        [[range(2, 20),   0.0, "Healthy Probes"],
                        [range(20, 39),  5.0, "Healthy Probes with Additional Mass"],
@@ -43,7 +45,7 @@ class Damage_Classes():
             if label == d_class[1]:
                 return [*d_class[0]]
                 
-    # chech label for validity
+    # check label for validity
     @staticmethod
     def validate_label(label):
         for d_class in Damage_Classes.classes:
