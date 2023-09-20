@@ -49,7 +49,7 @@ class Damage_Classes():
 
         self.df.insert(0, "Label", labels ,True)
 
-        print(f"Imported Shape: {self.df.shape}")
+        #print(f"Imported Shape: {self.df.shape}")
     
     def getDf(self): return self.df
 
