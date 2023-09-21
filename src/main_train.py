@@ -40,8 +40,8 @@ data_single_node = {
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
         super().__init__(*args, **kwargs)
-        self.criterion1 = nn.MSELoss(reduction= 'mean')
-        self.criterion2 = nn.L1Loss(reduction= 'mean')
+        self.criterion1 = nn.MSELoss(reduction='none')
+        self.criterion2 = nn.L1Loss(reduction='none')
         self.alpha = alpha
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -95,9 +95,10 @@ def train(model, train_x, valid_x, epochs, alpha):
     time_start = time.time()
     print(time_start)
 
-    print(epochs)
+    
+    
     for epoch in np.arange(0, epochs):
-        
+        #print("Inside the for loop")
         print(f"Epoch: {epoch+1}/{epochs}", end="")
 
         ### TRAINING PHASE ###
@@ -135,6 +136,7 @@ def train(model, train_x, valid_x, epochs, alpha):
             #train_epoch_loss += [torch.mean(item) for item in  (train_loss.item())]
 
             # Backpropagation
+            train_loss = train_loss.sum()
             optimizer.zero_grad()
             train_loss.backward()
 
@@ -215,9 +217,9 @@ if __name__ == "__main__":
     #summary(model, input_size=(1, seq_len_list[-1]))
 
     if True:
-        train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=10, batch_size=batch_size[2])
+        train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=10, batch_size=batch_size[1])
 
-        train_time, _, _  = train(model, train_x, valid_x, epochs[1], alphas[1])
+        train_time   = train(model, train_x, valid_x, epochs[0], alphas[1])
 
         #save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)
         save_model(model, archID, seq_len_list[0], 0, 0, train_time, interactive=False)
