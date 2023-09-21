@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 from torchinfo import summary
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = "cpu"# torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class linear_encoder(nn.Module): 
 

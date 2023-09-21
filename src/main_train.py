@@ -19,10 +19,10 @@ import utils
 path_Cp_data = '../data/AoA_0deg_Cp'
 
 # define training and test set based on design of experiment excel document
-train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88, 89,93,98,99,102,107,108,111, 112]
+train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88] #, 89,93,98,99,102,107,108,111, 112]
 valid_exp = [16,27,54,61,92,103]
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = "cpu" #torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 data_single_node = {
     "model_id": None,
@@ -40,8 +40,8 @@ data_single_node = {
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
         super().__init__(*args, **kwargs)
-        self.criterion1 = nn.MSELoss()
-        self.criterion2 = nn.L1Loss()
+        self.criterion1 = nn.MSELoss(reduction= 'mean')
+        self.criterion2 = nn.L1Loss(reduction= 'mean')
         self.alpha = alpha
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -93,6 +93,9 @@ def train(model, train_x, valid_x, epochs, alpha):
     print("-"*50)
     print("Starting Training...")
     time_start = time.time()
+    print(time_start)
+
+    print(epochs)
     for epoch in np.arange(0, epochs):
         
         print(f"Epoch: {epoch+1}/{epochs}", end="")
@@ -108,8 +111,28 @@ def train(model, train_x, valid_x, epochs, alpha):
             train_loss = criterion(y_train.float(), y_batch.float())
 
 
-            train_batch_loss += [train_loss]
-            train_epoch_loss += [train_loss.item()]
+            #train_batch_loss += [train_loss]
+            #print(train_loss.item())
+            
+            #exit()
+            #print("\n")
+            #print(len(train_loss)) # This is epoch length
+            #print(len(train_loss[0])) # This is number of chanells. 
+            #print(type(train_loss))
+            
+            #single_epoch_loss = []
+            #for item_idx in np.arange(0 , len(train_loss)): 
+                #print(train_loss[item_idx])
+                #print(torch.mean(train_loss[item_idx]))
+                #print(type(train_loss[item_idx]))
+                #print(train_loss[item_idx].shape)
+                #print("\n")
+            #    single_epoch_loss.append(torch.mean(train_loss[item_idx]))
+            
+            #train_loss = torch.mean(torch.stack(single_epoch_loss))
+            #print(train_loss.item())   
+            #exit()
+            #train_epoch_loss += [torch.mean(item) for item in  (train_loss.item())]
 
             # Backpropagation
             optimizer.zero_grad()
@@ -126,24 +149,24 @@ def train(model, train_x, valid_x, epochs, alpha):
                 model.eval()
 
                 y_valid = model.forward(x_batch.float())
-                valid_loss = criterion(y_valid.float(), y_batch.float())
+            #    valid_loss = criterion(y_valid.float(), y_batch.float())
 
-                valid_batch_loss += [valid_loss]
-                valid_epoch_loss += [valid_loss.item()]
+            #    valid_batch_loss += [valid_loss]
+            #    valid_epoch_loss += [np.mean(valid_loss.item())]
 
 
-        print(f"\t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss):.05}, \
-                Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss):.05}")
+        #print(f"\t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss):.05}, \
+        #        Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss):.05}")
 
-        train_total_loss.append(sum(train_epoch_loss)/len(train_epoch_loss))
-        valid_total_loss.append(sum(valid_epoch_loss)/len(valid_epoch_loss))
+        #train_total_loss.append(sum(train_epoch_loss)/len(train_epoch_loss))
+        #valid_total_loss.append(sum(valid_epoch_loss)/len(valid_epoch_loss))
 
-        train_epoch_loss, valid_epoch_loss = [], []
-        train_batch_loss, valid_batch_loss = [], []
+        #train_epoch_loss, valid_epoch_loss = [], []
+        #train_batch_loss, valid_batch_loss = [], []
     time_end = time.time()
     train_time = time_end - time_start
 
-    return train_time, train_total_loss, valid_total_loss 
+    return train_time #, train_total_loss, valid_total_loss 
 
 def save_model(model, archID, seq_len, train_loss, valid_loss, train_time, interactive=True):
     l_channels = "unknown"
@@ -185,19 +208,19 @@ if __name__ == "__main__":
     epochs = [10, 100, 120, 160 ,200]
     alphas = [0.3, 0.5, 0.9]
 
-    archID = "6424"
+    archID = "a61c"
     model = Model(archID, 800, 100)
     model.to(device)
 
-    summary(model, input_size=(1, seq_len_list[-1]))
+    #summary(model, input_size=(1, seq_len_list[-1]))
 
     if True:
-        train_x, valid_x = initData(seq_len=seq_len_list[0], stride=10, batch_size=batch_size[1])
+        train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=10, batch_size=batch_size[2])
 
-        train_time, train_total_loss, valid_total_loss  = train(model, train_x, valid_x, epochs[1], alphas[1])
+        train_time, _, _  = train(model, train_x, valid_x, epochs[1], alphas[1])
 
-        save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time)
-
+        #save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)
+        save_model(model, archID, seq_len_list[0], 0, 0, train_time, interactive=False)
     if False:
         seq = seq_len_list[0]
         batch = batch_size[0]
