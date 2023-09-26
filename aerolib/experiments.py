@@ -1,5 +1,6 @@
 import os
 import pandas as pd 
+from simple_term_menu import TerminalMenu
 import shutup 
 shutup.please()
 
@@ -56,6 +57,12 @@ class Damage_Classes():
     def ex2label(self, experiment):
         return self.df.loc[self.df['Experiment Number'] == experiment]['Label'].iloc[0]
 
+    def ex2wind(self, experiment):
+        return self.df.loc[self.df['Experiment Number'] == experiment]['Wind speed [m/s]'].iloc[0]
+
+    def ex2excit(self, experiment):
+        return self.df.loc[self.df['Experiment Number'] == experiment]['Heaving frequency in [Hz],  from motor excitations'].iloc[0]
+
     # experiment to desc
     def ex2desc(self, experiment):
         label = self.ex2label(experiment)
@@ -72,7 +79,7 @@ class Damage_Classes():
     def filter(self, label, wind=None, excitation=None):
         #print(f"Label: {label} | wind: {wind} | exci: {excitation}")
         df = self.df
-        print(df['Wind speed [m/s]'].isin(self.windspeed))
+        # print(df['Wind speed [m/s]'].isin(self.windspeed))
         if wind == None and excitation == None:
             return df.loc[(df['Label'] == label)&(df['Wind speed [m/s]'].isin(self.windspeed))]['Experiment Number'].tolist()
 
@@ -85,26 +92,67 @@ class Damage_Classes():
         return df.loc[(df['Label'] == label)&(df['Wind speed [m/s]'] == wind)&(df['Heaving frequency in [Hz],  from motor excitations'] == excitation)]['Experiment Number'].tolist()
 
 
+def chooseSensor(allSensors=True, sensorCount=36, debug=False):
+    opt = [x for x in range(1, sensorCount+1)]
+    if allSensors: opt.append("all")
+    if debug: print(f"Possible Options: {opt}")
+    optStr = map(str, opt)
+    idx = TerminalMenu(optStr, title="Choose a Sensor:").show()
+    print(f"Selected Sensor: {opt[idx]}")
+    return opt[idx]
 
-if __name__ == "__main__":
+def chooseSetOfExperiments():
     dc = Damage_Classes()
 
-    # iterating the columns
-    df = dc.getDf()
-    print("\nPresent Colums:")
-    for col in df.columns:
-        print(col)
+    # choose label
+    options = []
+    for l, d in dc.labels:
+        options.append(d)
+    label = TerminalMenu(options, title="Choose Damage Class:").show()
+    damage = dc.labels[label][0]
+    desc = dc.labels[label][1]
+    print(f"Selected Damage Class: {desc} with label {damage}")
 
-    print(f"\nExperiment: 25 to label: {dc.ex2label(25)}")
+    # choose wind
+    opt = [None]
+    for d in dc.windspeed:
+        opt.append(d)
+    optStr = map(str, opt)
+    idx = TerminalMenu(optStr, title="Choose Windspeed in m/s:").show()
+    windspeed = opt[idx]
+    print(f"Selected Windspeed: {windspeed} m/s")
 
-    print(f"\nExperiment: 25 to desc: {dc.ex2desc(25)}")
+    # choose excitation
+    opt = [None]
+    for d in dc.excitation:
+        opt.append(d)
+    optStr = map(str, opt)
+    idx = TerminalMenu(optStr, title="Choose Excitation in Hz:").show()
+    excitation = opt[idx]
+    print(f"Selected Excitation Frequency: {excitation} Hz")
 
-    print(f"\nLabel: 2 to ExList: {dc.label2exlist(2)}")
+    desc = dc.labels[label][1]
+    experiments = dc.filter(damage, wind=windspeed, excitation=excitation)
+    return experiments, label, desc, windspeed, excitation
 
-    print(f"\nLabel: 4, excit: 1,00, wind: all to ExList: {dc.filter(2, excitation='1,00')}")
-    print(f"\nLabel: 4, excit: 1,00, wind: all to ExList: {dc.filter(2, excitation='1,00')}")
-    print(f"\nLabel: 4, excit: 1,00, wind: 10 to ExList: {dc.filter(2, wind=10, excitation='1,00')}")
-    print(f"\nLabel: 4, excit: 1,90, wind: 20 to ExList: {dc.filter(2, wind=20, excitation='1,90')}")
+if __name__ == "__main__":
+    # dc = Damage_Classes()
+    #
+    # # iterating the columns
+    # df = dc.getDf()
+    # print("\nPresent Colums:")
+    # for col in df.columns:
+    #     print(col)
+    #
+    # print(f"\nExperiment: 25 to label: {dc.ex2label(25)}")
+    # print(f"\nExperiment: 25 to desc: {dc.ex2desc(25)}")
+    # print(f"\nLabel: 2 to ExList: {dc.label2exlist(2)}")
+    # print(f"\nLabel: 4, excit: 1,00, wind: all to ExList: {dc.filter(2, excitation='1,00')}")
+    # print(f"\nLabel: 4, excit: 1,00, wind: all to ExList: {dc.filter(2, excitation='1,00')}")
+    # print(f"\nLabel: 4, excit: 1,00, wind: 10 to ExList: {dc.filter(2, wind=10, excitation='1,00')}")
+    # print(f"\nLabel: 4, excit: 1,90, wind: 20 to ExList: {dc.filter(2, wind=20, excitation='1,90')}")
 
 
+    chooseSensor(debug=True)
+    chooseSetOfExperiments()
 

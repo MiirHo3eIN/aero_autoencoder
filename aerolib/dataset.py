@@ -10,49 +10,6 @@ import shapers
 import shutup 
 shutup.please()
 
-# This class is not meant to be instantiated
-# Its purpose is to have the mapping from experiments and labels 
-# in a centalized and accesible way
-class retired_Damage_Classes():
-    
-
-    # Name             [ Experiments , Label, Desctiption]
-    classes  =        [[range(2, 20),   0.0, "Healthy Probes"],
-                       [range(20, 39),  5.0, "Healthy Probes with Additional Mass"],
-                       [range(39, 58),  1.0, "5mm Crack"],
-                       [range(58, 77),  2.0, "10mm Crack"],
-                       [range(77, 96),  3.0, "15mm Crack"],
-                       [range(96, 114), 4.0, "20mm Crack"]]
-
-    # experiment to label
-    @staticmethod
-    def ex2label(experiment):
-        for d_class in Damage_Classes.classes:
-            if experiment in d_class[0]:
-                return d_class[1]
-
-    # experiment to desc
-    @staticmethod
-    def ex2desc(experiment):
-        for d_class in Damage_Classes.classes:
-            if experiment in d_class[0]:
-                return d_class[2]
-
-    # label to experiments
-    @staticmethod
-    def label2exlist(label):
-        for d_class in Damage_Classes.classes:
-            if label == d_class[1]:
-                return [*d_class[0]]
-                
-    # check label for validity
-    @staticmethod
-    def validate_label(label):
-        for d_class in Damage_Classes.classes:
-            if label == d_class[1]:
-                return True
-        return False
-
 # This class operates on the original cp data
 # Creates a dataset that returns sequenced data attached with a label
 class CpDataset(Dataset):
@@ -157,36 +114,50 @@ class TensorLoaderPickeld():
         t = torch.load(filepath) 
         return t 
 
-class TensorLoaderCp():
-
-    def __init__(self, path, experiments: list, skiprows=2500) -> None:
-        self._path = path 
+class TensorLoader():
+    def __init__(self, path, experiments: list, cols: list, skiprows: int, deli=' ') -> None:
+        self._path = path
         self._exp = experiments
         self._datasetlen = len(self._exp)
-
-            #load all experiments to tensors
-        del_cells = [0, 23]
-        cols = np.arange(0, 38)
-        self.use_cols = np.delete(cols, del_cells)
         self._skiprows = skiprows
+        self._cols = cols
+        self._deli = deli
 
-    def __len__(self) -> int:
+    def __len__(self) -> int: 
         return self._datasetlen
-    
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         exp = self._exp[idx]
         filepath = self._path+f'/aoa_0deg_Exp_{exp:03}_aerosense.csv'
         df = pd.read_csv(open(filepath,'r'),
-                         delimiter=' ',
+                         delimiter=self._deli,
                          skiprows = self._skiprows,
-                         usecols = self.use_cols)
-       
+                         usecols = self._cols,
+                         )   
         tensor = torch.tensor(df.values, dtype = torch.float32)
+        return torch.transpose(tensor, 0, 1)
 
-        # returns an [m, 36] tensor
-        # m = used rows in dataset
-        return tensor
+class TensorLoaderCp(TensorLoader):
+    def __init__(self, path, experiments: list, skiprows=2500) -> None:
+        # The Cp data already has the faulty sesors removed therefore
+        # only 38 sensors are present additionally for some reason 
+        # two additional sensors were removed...
+        cols = np.arange(1, 37)
+        super().__init__(path, experiments, cols, skiprows)
+
+class TensorLoaderCp38(TensorLoader):
+    def __init__(self, path, experiments: list, skiprows=2500) -> None:
+        # The Cpdata already has the faulty sesors removed therefore
+        # only 38 sensors are present
+        cols = np.arange(1, 39)
+        super().__init__(path, experiments, cols, skiprows)
+
+class TensorLoaderRaw(TensorLoader):
+    def __init__(self, path, experiments: list, skiprows=3) -> None:
+        # The Cpdata already has the faulty sesors removed therefore
+        # only 38 sensors are present
+        cols = np.arange(1, 41)
+        super().__init__(path, experiments, cols, skiprows, deli=',')
  
 
 # Personal note: unify the following two classes
