@@ -9,20 +9,24 @@ import time
 import shutup 
 shutup.please()
 
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 # Custom imports
 from dataset import * 
 from ae_model import *
 import utils 
 
 # User input
-
+torch.device("cpu")
 path_Cp_data = '../data/AoA_0deg_Cp'
 
 # define training and test set based on design of experiment excel document
-train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50,51,55,60,64,65,69,70,73,74,79,80,83,84,88] #, 89,93,98,99,102,107,108,111, 112]
+train_exp = [3,4,7,8,12,13,17,22,23,26,31,32,35,36,41,42,45,46,50] #,51,55,60,64,65,69,70,73,74,79,80,83,84,88] #, 89,93,98,99,102,107,108,111, 112]
 valid_exp = [16,27,54,61,92,103]
 
-device = "cpu" #torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 data_single_node = {
     "model_id": None,
@@ -36,6 +40,14 @@ data_single_node = {
     "train_time": None,
     "mse": None
 }
+
+
+def plot(): 
+    with sns.plotting_context("poster"):
+        plt.figure(figsize = (16,3))
+#        plt.plot(test_x[0, sensor-1, :].detach().numpy(), color = 'green', label = 'original')
+    pass
+
 
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
@@ -56,19 +68,27 @@ def initData(seq_len, stride, batch_size):
     print(f"Initilaize Datasets")
     train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len= seq_len)
     valid_x = TimeseriesTensor(path_Cp_data,valid_exp, seq_len= seq_len)
-    train_x, valid_x = train_x.to(device), valid_x.to(device)
+    train_x, valid_x = train_x , valid_x 
+
 
     print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[2]} sequence length")
     print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[2]} sequence length")
 
     dataset_train = TensorDataset(train_x , train_x)
-    train_loader = DataLoader(dataset_train, batch_size = batch_size, shuffle = False)
+    train_loader = DataLoader(dataset_train, batch_size = batch_size, shuffle = False )
 
     dataset_valid = TensorDataset(valid_x, valid_x)
-    valid_loader = DataLoader(dataset_valid, batch_size = batch_size, shuffle = False)
+    valid_loader = DataLoader(dataset_valid, batch_size = batch_size, shuffle = False )
+    
+
+    
     del train_x, valid_x
     
     print("\n")
+    
+
+
+
     return train_loader, valid_loader
 
 def train(model, train_x, valid_x, epochs, alpha):
@@ -80,7 +100,7 @@ def train(model, train_x, valid_x, epochs, alpha):
     eps = 1e-9
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=betas, eps=eps)
     criterion = reconstruction_loss(alpha=alpha)
-    print(f"Used Device: {device}")
+    #print(f"Used Device: {device}")
     print(f"Optimizer | lr: {lr} | betas: {betas} | eps: {eps}")
     print(f"Criterion alpha: {alpha}")
     print("\n")
@@ -99,7 +119,7 @@ def train(model, train_x, valid_x, epochs, alpha):
     
     for epoch in np.arange(0, epochs):
         #print("Inside the for loop")
-        print(f"Epoch: {epoch+1}/{epochs}", end="")
+        print(f"Epoch: {epoch+1}/{epochs}")
 
         ### TRAINING PHASE ###
 
@@ -111,11 +131,13 @@ def train(model, train_x, valid_x, epochs, alpha):
             y_train = model.forward(x_batch.float())
             train_loss = criterion(y_train.float(), y_batch.float())
 
+            train_loss = torch.min(train_loss)
+            print(train_loss.item())
+#            train_batch_loss += [train_loss]
+ #           print(train_loss.item())
 
-            #train_batch_loss += [train_loss]
-            #print(train_loss.item())
+            exit()          
             
-            #exit()
             #print("\n")
             #print(len(train_loss)) # This is epoch length
             #print(len(train_loss[0])) # This is number of chanells. 
@@ -212,13 +234,17 @@ if __name__ == "__main__":
 
     archID = "a61c"
     model = Model(archID, 800, 100)
-    model.to(device)
+    model.to("cpu")
 
-    summary(model, input_size=(1, 30, seq_len_list[-1]))
-
+    
+    #summary(model, input_size=(1, 30, seq_len_list[-1]))
+    
+    print(torch.cuda.current_device())
+    model_device = next(model.parameters()).device
+    print("Model Device:", model_device)
     if True:
-        train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=10, batch_size=batch_size[1])
-
+        train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=100, batch_size=batch_size[1])
+        
         train_time   = train(model, train_x, valid_x, epochs[0], alphas[1])
 
         #save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)
