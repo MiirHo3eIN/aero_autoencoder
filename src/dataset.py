@@ -194,7 +194,7 @@ class TensorLoaderCp():
         self._datasetlen = len(self._exp)
 
         #load all experiments to tensors
-        del_cells = [0, 23]
+        del_cells = [0,1,2,3,4,5,6,23]
         cols = np.arange(0, 38)
         self.use_cols = np.delete(cols, del_cells)
         self._skiprows = 2500

@@ -214,7 +214,7 @@ if __name__ == "__main__":
     model = Model(archID, 800, 100)
     model.to(device)
 
-    #summary(model, input_size=(1, seq_len_list[-1]))
+    summary(model, input_size=(1, 30, seq_len_list[-1]))
 
     if True:
         train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=10, batch_size=batch_size[1])

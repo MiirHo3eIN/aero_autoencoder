@@ -492,7 +492,7 @@ class AE_a61c(nn.Module):
     """ 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.c_in = 36
+        self.c_in = 30
         self.encoder = CNN_encoder(c_in = self.c_in)
         self.decoder = CNN_decoder(c_in = self.c_in)
     
