@@ -7,6 +7,13 @@ import os
 from simple_term_menu import TerminalMenu
 
 
+import torch 
+import torch.nn as nn
+
+import shutup 
+shutup.please()
+
+
 MSE = lambda x, x_hat: np.mean(np.square(x - x_hat), axis = 1)
 
 
@@ -94,3 +101,4 @@ if __name__ == "__main__":
     print(f"Saving the model: {model_number}")
 
     
+

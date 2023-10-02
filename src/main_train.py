@@ -42,18 +42,18 @@ data_single_node = {
 }
 
 
-def plot(): 
+def plot(x_input, color, label ): 
     with sns.plotting_context("poster"):
         plt.figure(figsize = (16,3))
-#        plt.plot(test_x[0, sensor-1, :].detach().numpy(), color = 'green', label = 'original')
-    pass
+        plt.plot(x_input, color = color, label = label)
+        plt.legend()
 
 
 class reconstruction_loss(nn.Module):
     def __init__(self, alpha, *args, **kwargs) -> None:    
         super().__init__(*args, **kwargs)
-        self.criterion1 = nn.MSELoss(reduction='none')
-        self.criterion2 = nn.L1Loss(reduction='none')
+        self.criterion1 = nn.MSELoss(reduction='mean')
+        self.criterion2 = nn.L1Loss(reduction='mean')
         self.alpha = alpha
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -69,7 +69,6 @@ def initData(seq_len, stride, batch_size):
     train_x = TimeseriesTensor(path_Cp_data,train_exp, seq_len= seq_len)
     valid_x = TimeseriesTensor(path_Cp_data,valid_exp, seq_len= seq_len)
     train_x, valid_x = train_x , valid_x 
-
 
     print(f"Train x shape: \t {train_x.shape} with {train_x.shape[0]} Training samples and {train_x.shape[2]} sequence length")
     print(f"Valid x shape: \t {valid_x.shape} with {valid_x.shape[0]} Training samples and {valid_x.shape[2]} sequence length")
@@ -131,34 +130,13 @@ def train(model, train_x, valid_x, epochs, alpha):
             y_train = model.forward(x_batch.float())
             train_loss = criterion(y_train.float(), y_batch.float())
 
-            train_loss = torch.min(train_loss)
-            print(train_loss.item())
-#            train_batch_loss += [train_loss]
- #           print(train_loss.item())
-
-            exit()          
-            
-            #print("\n")
-            #print(len(train_loss)) # This is epoch length
-            #print(len(train_loss[0])) # This is number of chanells. 
-            #print(type(train_loss))
-            
-            #single_epoch_loss = []
-            #for item_idx in np.arange(0 , len(train_loss)): 
-                #print(train_loss[item_idx])
-                #print(torch.mean(train_loss[item_idx]))
-                #print(type(train_loss[item_idx]))
-                #print(train_loss[item_idx].shape)
-                #print("\n")
-            #    single_epoch_loss.append(torch.mean(train_loss[item_idx]))
-            
-            #train_loss = torch.mean(torch.stack(single_epoch_loss))
-            #print(train_loss.item())   
-            #exit()
+            #train_loss = torch.min(train_loss)
+            train_batch_loss += [train_loss]
+            train_epoch_loss += [train_loss.item()]
             #train_epoch_loss += [torch.mean(item) for item in  (train_loss.item())]
 
             # Backpropagation
-            train_loss = train_loss.sum()
+#            train_loss = train_loss.sum()
             optimizer.zero_grad()
             train_loss.backward()
 
@@ -173,24 +151,24 @@ def train(model, train_x, valid_x, epochs, alpha):
                 model.eval()
 
                 y_valid = model.forward(x_batch.float())
-            #    valid_loss = criterion(y_valid.float(), y_batch.float())
+                valid_loss = criterion(y_valid.float(), y_batch.float())
 
-            #    valid_batch_loss += [valid_loss]
-            #    valid_epoch_loss += [np.mean(valid_loss.item())]
+                valid_batch_loss += [valid_loss]
+                valid_epoch_loss += [(valid_loss.item())]
 
 
-        #print(f"\t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss):.05}, \
-        #        Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss):.05}")
+        print(f"\t Train loss = {sum(train_epoch_loss)/len(train_epoch_loss):.05}, \
+                Validation Loss = {sum(valid_epoch_loss)/len(valid_epoch_loss):.05}")
 
-        #train_total_loss.append(sum(train_epoch_loss)/len(train_epoch_loss))
-        #valid_total_loss.append(sum(valid_epoch_loss)/len(valid_epoch_loss))
+        train_total_loss.append(sum(train_epoch_loss)/len(train_epoch_loss))
+        valid_total_loss.append(sum(valid_epoch_loss)/len(valid_epoch_loss))
 
-        #train_epoch_loss, valid_epoch_loss = [], []
-        #train_batch_loss, valid_batch_loss = [], []
+        train_epoch_loss, valid_epoch_loss = [], []
+        train_batch_loss, valid_batch_loss = [], []
     time_end = time.time()
     train_time = time_end - time_start
 
-    return train_time #, train_total_loss, valid_total_loss 
+    return train_time , train_total_loss, valid_total_loss 
 
 def save_model(model, archID, seq_len, train_loss, valid_loss, train_time, interactive=True):
     l_channels = "unknown"
@@ -245,10 +223,10 @@ if __name__ == "__main__":
     if True:
         train_x, valid_x = initData(seq_len=seq_len_list[-1], stride=100, batch_size=batch_size[1])
         
-        train_time   = train(model, train_x, valid_x, epochs[0], alphas[1])
+        train_time, train_total_loss , valid_total_loss    = train(model, train_x, valid_x, epochs[0], alphas[1])
 
-        #save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)
-        save_model(model, archID, seq_len_list[0], 0, 0, train_time, interactive=False)
+        save_model(model, archID, seq_len_list[0], train_total_loss[-1], valid_total_loss[-1], train_time, interactive=False)
+        #save_model(model, archID, seq_len_list[-1], 0, 0, train_time, interactive=False)
     if False:
         seq = seq_len_list[0]
         batch = batch_size[0]

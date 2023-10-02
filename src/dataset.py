@@ -188,11 +188,11 @@ class TensorLoaderPickeld():
 
 class TensorLoaderCp():
 
-    def __init__(self, path, experiments: list) -> None:
+    def __init__(self, path, experiments: list, remove_bias: bool) -> None:
         self._path = path 
         self._exp = experiments
         self._datasetlen = len(self._exp)
-
+        self._remove_bias = remove_bias 
         #load all experiments to tensors
         del_cells = [0,1,2,3,4,5,6,23]
         cols = np.arange(0, 38)
@@ -212,6 +212,9 @@ class TensorLoaderCp():
                          usecols = self.use_cols)
        
         tensor = torch.tensor(df.values, dtype = torch.float32)
+        
+        if self._remove_bias:
+            tensor = tensor - torch.mean(tensor, dim = 0)
 
         # returns an [m, 36] tensor
         # m = used rows in dataset
@@ -223,7 +226,7 @@ class TensorLoaderCp():
 # looks like a class, because it creates a (specific) Tensor
 def TimeseriesTensor(path, experiments: list, seq_len:int, stride=10) -> torch.Tensor:
 
-    tensors = TensorLoaderCp(path, experiments)  
+    tensors = TensorLoaderCp(path, experiments, remove_bias=True)  
     shaper = Overlapper(seq_len, stride) 
 
     final_tensor = None        
